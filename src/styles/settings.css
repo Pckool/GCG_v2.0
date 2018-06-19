@@ -1,0 +1,15 @@
+.input-box{
+    flex-grow: 1;
+    margin: 1em;
+    padding: 0.7em;
+    font-weight: 500;
+    color: #f3f3f3;
+    border: 2px solid #f3f3f3;
+    cursor: pointer;
+    background-color: rgba(0,0,0,0.0);
+    transition-duration: 0.3s;
+    outline: none;
+}
+.settings-btn{
+    flex-grow: 1;
+}

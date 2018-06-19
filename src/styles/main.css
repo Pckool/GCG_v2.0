@@ -1,0 +1,124 @@
+/*
+color
+#f3f3f3
+#3a3a3a
+rgba(59,65,79, 1) #3B414F
+#e2bc48
+*/
+@import url('https://fonts.googleapis.com/css?family=Open+Sans+Condensed|Raleway');
+@font-face {
+  font-family: 'Sugoe UI';
+  src:  url('/fonts/Segoe UI.ttf') format('truetype');
+}
+html{
+    margin: 0;
+    padding: 0;
+}
+body{
+    margin: 0;
+    font-family: 'Sugoe UI', 'Open Sans Condensed', sans-serif;
+    background-color: rgba(59,65,79, 1);
+    font-size: 16px;
+}
+.title-card{
+    background-color: white;
+}
+.main-cont{
+    color: #f3f3f3;
+}
+.main-card{
+    padding: 0.5em 0.5em;
+}
+.settings-card{
+    padding: 0.5em 0.5em;
+    display: flex;
+    flex-flow: column;
+}
+.grab-buttons{
+    display: flex;
+    flex-flow: column;
+}
+.btn-main{
+    margin: 1em;
+    padding: 0.7em;
+    font-weight: 500;
+    text-transform: uppercase;
+    color: #f3f3f3;
+    border: 2px solid #f3f3f3;
+    cursor: pointer;
+    background-color: rgba(0,0,0,0.0);
+    transition-duration: 0.3s;
+    outline: none;
+}
+.btn-main:hover{
+    color: #e2bc48;
+    border-color: #e2bc48;
+    transition-duration: 0.3s;
+}
+.slider {
+    -webkit-appearance: none;  /* Override default CSS styles */
+    appearance: none;
+    width: 100%; /* Full-width */
+    height: 2px; /* Specified height */
+    background: #f3f3f3;
+    outline: none; /* Remove outline */
+    opacity: 0.7; /* Set transparency (for mouse-over effects on hover) */
+    -webkit-transition: .2s; /* 0.2 seconds transition on hover */
+    transition: opacity .2s;
+}
+.slider::-webkit-slider-thumb {
+    -webkit-appearance: none; /* Override default look */
+    appearance: none;
+    width: 12px; /* Set a specific slider handle width */
+    height: 12px; /* Slider handle height */
+    border: 2px solid rgba(59,65,79, 1);
+    border-radius: 50%;
+    background: #f3f3f3;
+    cursor: pointer; /* Cursor on hover */
+    transition-duration: 0.3s;
+}
+.slider::-webkit-slider-thumb:hover {
+    width: 14px; /* Set a specific slider handle width */
+    height: 14px; /* Slider handle height */
+    background: #e2bc48;
+    transition-duration: 0.3s;
+}
+.numText{
+    text-align: center;
+}
+h1{
+    font-family: 'Raleway', sans-serif;
+    font-weight: 100;
+    text-transform: uppercase;
+    text-align: center;
+    margin: 0;
+    padding: 0.5em 0.3em;
+    color: #3a3a3a;
+    font-size: 45px;
+}
+.icon-links, .x-icon{
+    transition-duration: 0.3s;
+    color: #f3f3f3;
+    cursor: pointer;
+}
+.x-icon{
+    float: right;
+}
+.icon-links:visited{
+    color: #f3f3f3;
+}
+.icon-links:focus{
+    color: #f3f3f3;
+}
+.icon-links:hover{
+    color: #e2bc48;
+    transition-duration: 0.3s;
+}
+.x-icon:hover{
+    color: Tomato;
+    transition-duration: 0.3s;
+}
+.flexRow{
+    display: flex;
+    flex-flow: row;
+}
