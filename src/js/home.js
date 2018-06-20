@@ -1,3 +1,4 @@
+
 var slider = document.getElementById("numCodes");
 var output = document.getElementById("numText");
 output.innerHTML = slider.value; // Display the default slider value
