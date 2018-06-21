@@ -7,70 +7,107 @@ var pcLocation;
 var ps4Location;
 var xb1Location;
 const keyPass = 'WarframeFanChannels';
-const config = {
+var config = {
     'pc': '',
     'ps4': '',
     'xb1': '',
     'token': '',
     'secret': ''
 }
-function showPcFileManager(){
-    dialog.showOpenDialog({
-        defaultPath: 'C:/',
-        filters: [{
-            name: 'Glyph Codes',
-            extensions: ['txt', 'csv']
-        }]
-    },function(fileLocation){
-        pcLocation = fileLocation.toString();
-        console.log(pcLocation);
-        document.getElementById('pc-input').value = pcLocation;
-        // This subfunction needs to have a try catch block
-    });
-}
-function showPs4FileManager(){
-    dialog.showOpenDialog({
-        defaultPath: 'C:/',
-        filters: [{
-            name: 'Glyph Codes',
-            extensions: ['txt', 'csv']
-        }]
-    },function(fileLocation){
-        pcLocation = fileLocation.toString();
-        console.log(ps4Location);
-        document.getElementById('ps4-input').value = pcLocation;
-    });
-}
-function showXb1FileManager(){
-    dialog.showOpenDialog({
-        defaultPath: 'C:/',
-        filters: [{
-            name: 'Glyph Codes',
-            extensions: ['txt', 'csv']
-        }]
-    },function(fileLocation){
-        pcLocation = fileLocation.toString();
-        console.log(xb1Location);
-        document.getElementById('xb1-input').value = pcLocation;
-    });
-}
+app.controller('settingsController', function($scope){
+    $scope.populateBoxes = function($scope){
+        $scope.pcLocation = config['pc'];
+        $scope.ps4Location = config['ps4'];
+        $scope.xb1Location = config['xb1'];
+    }
+    $scope.populateBoxes($scope);
+
+    $scope.showPcFileManager = function(){
+        dialog.showOpenDialog({
+            defaultPath: 'C:/',
+            filters: [{
+                name: 'Glyph Codes',
+                extensions: ['txt', 'csv']
+            }]
+        },function(fileLocation){
+            try {
+                pcLocation = fileLocation.toString();
+                console.log(pcLocation);
+                document.getElementById('pc-input').value = pcLocation;
+            } catch (e) {
+                console.log('No file selected.');
+            }
+
+            // This subfunction needs to have a try catch block
+        });
+    }
+    $scope.showPs4FileManager = function(){
+        dialog.showOpenDialog({
+            defaultPath: 'C:/',
+            filters: [{
+                name: 'Glyph Codes',
+                extensions: ['txt', 'csv']
+            }]
+        },function(fileLocation){
+            try{
+                pcLocation = fileLocation.toString();
+                console.log(ps4Location);
+                document.getElementById('ps4-input').value = pcLocation;
+            } catch (e) {
+                console.log('No file selected.');
+            }
+
+        });
+    }
+    $scope.showXb1FileManager = function(){
+        dialog.showOpenDialog({
+            defaultPath: 'C:/',
+            filters: [{
+                name: 'Glyph Codes',
+                extensions: ['txt', 'csv']
+            }]
+        },function(fileLocation){
+            try{
+                pcLocation = fileLocation.toString();
+                console.log(xb1Location);
+                document.getElementById('xb1-input').value = pcLocation;
+            } catch (e) {
+                console.log('No file selected.');
+            }
+
+        });
+    }
+});
+
 function saveLocations(){
     config['pc'] = pcLocation;
     config['ps4'] = ps4Location;
     config['xb1'] = xb1Location;
-    var cipher = crypto.createCipher('sha256', keyPass);
+    var cipher = crypto.createCipher('aes-128-cbc', keyPass); // Issue here
 
     var cryptConfig = cipher.update(JSON.stringify(config), 'utf8', 'hex');
     cryptConfig += cipher.final('hex');
-    console.log(cryptConfig);
     var wd = jetpack.cwd();
     jetpack.write(`${__dirname}/bin/data.init`, cryptConfig);
 }
-function LoadConfig(){
-    var decipher = crypto.createDecipher('sha256', keyPass);
-    var loadedConfig = jetpack.read(`${__dirname}/bin/data.init`);
-    var decrpt = decipher.update(loadedConfig, 'hex', 'utf8');
-    decrpt += decipher.final('utf8');
-
+function resetConfig(){
+    pcLocation = '';
+    ps4Location = '';
+    xb1Location = '';
+    saveLocations();
 }
-$(document).ready(LoadConfig);
+function LoadConfig(){
+    console.log('Loading Save File!');
+    var decipher = crypto.createDecipher('aes-128-cbc', keyPass);
+    console.log('.');
+    var loadedConfig = jetpack.read(`${__dirname}/bin/data.init`);
+    console.log('.');
+    var decrpt = decipher.update(loadedConfig, 'hex', 'utf8');
+    console.log('.');
+    decrpt += decipher.final('utf8');
+    config = JSON.parse(decrpt);
+    console.log('Save Loaded!');
+}
+window.onload = function(){
+    LoadConfig();
+}

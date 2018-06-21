@@ -12,4 +12,10 @@
 }
 .settings-btn{
     flex-grow: 1;
+
+}
+.button-lnks{
+    display: flex;
+    flex-flow: column;
+    text-decoration: none;
 }
