@@ -15,6 +15,8 @@ var config = {
     'secret': ''
 }
 app.controller('settingsController', function($scope){
+    document.onresize = correctContSize;
+
     $scope.populateBoxes = function($scope){
         $scope.pcLocation = config['pc'];
         $scope.ps4Location = config['ps4'];
@@ -77,6 +79,9 @@ app.controller('settingsController', function($scope){
 
         });
     }
+    
+    // For Twitter Integration
+    $scope.twitterOauth = twitterOauth;
 });
 
 function saveLocations(){
@@ -97,17 +102,23 @@ function resetConfig(){
     saveLocations();
 }
 function LoadConfig(){
-    console.log('Loading Save File!');
-    var decipher = crypto.createDecipher('aes-128-cbc', keyPass);
-    console.log('.');
-    var loadedConfig = jetpack.read(`${__dirname}/bin/data.init`);
-    console.log('.');
-    var decrpt = decipher.update(loadedConfig, 'hex', 'utf8');
-    console.log('.');
-    decrpt += decipher.final('utf8');
-    config = JSON.parse(decrpt);
-    console.log('Save Loaded!');
+    try{
+        console.log('Loading Save File!');
+        var decipher = crypto.createDecipher('aes-128-cbc', keyPass);
+        console.log('.');
+        var loadedConfig = jetpack.read(`${__dirname}/bin/data.init`);
+        console.log('.');
+        var decrpt = decipher.update(loadedConfig, 'hex', 'utf8');
+        console.log('.');
+        decrpt += decipher.final('utf8');
+        config = JSON.parse(decrpt);
+        console.log('Save Loaded!');
+    }catch(err){
+        throw new err;
+    }
+
 }
+// On the initial load, we will load the user's data
 window.onload = function(){
     LoadConfig();
 }

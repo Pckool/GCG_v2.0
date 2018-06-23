@@ -1,5 +1,8 @@
-<div class="settings-card">
-    <a class="x-icon" href="#/!"><i class="fas fa-times-circle fa-2x"></i></a>
+<div class="top-bar" id="top-bar">
+    <a class="" href="#/!"><i class="x-icon far fa-times-circle fa-2x"></i></a>
+</div>
+
+<div class="main-card" id="main-card">
     <div class="flexRow pc-box">
         <input id="pc-input" class="input-box" type="text" name="pcLocation" value="" ng-model="pcLocation" disabled>
         <button class="btn-main settings-btn" type="button" name="pcBrowse" ng-click="showPcFileManager()">PC Codes Location</button>
@@ -14,4 +17,7 @@
     </div>
     <a href="#/!" class="button-lnks"><button class="btn-main settings-btn" type="button" name="Save" onclick="saveLocations()">Save</button></a>
     <a href="#/!" class="button-lnks"><button class="btn-main settings-btn" type="button" name="Reset" onclick="resetConfig()">Reset</button></a>
+</div>
+<div class="connections-card">
+    <a href="#/!" class="button-lnks"><button class="btn-main settings-btn" type="button" name="Reset" onclick="twitterOauth()">Reset</button></a>
 </div>

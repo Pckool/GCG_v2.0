@@ -11,6 +11,7 @@ app.controller('homeController', function($scope){
         //output.innerHTML = this.value;
         $scope.sliderValue = parseInt($scope.slider.value); // Display the slider value
     }
+    document.onresize = correctContSize;
 
     $scope.pcCodeGrab = function(){
         try{
@@ -39,7 +40,12 @@ app.controller('homeController', function($scope){
             });
 
         } catch(err){
-            console.log('Something went wrong: ' + err);
+            const dialogOpts = {
+            		type: 'info',
+            		message: 'Something went wrong...',
+            		detail: 'Error: ' + err
+            	}
+            dialog.showMessageBox(dialogOpts);
         }
     }
     $scope.ps4CodeGrab = function(){
@@ -70,10 +76,15 @@ app.controller('homeController', function($scope){
             });
 
         } catch(err){
-            console.log('Something went wrong: ' + err);
+            const dialogOpts = {
+            		type: 'info',
+            		message: 'Something went wrong...',
+            		detail: 'Error: ' + err
+            	}
+            dialog.showMessageBox(dialogOpts);
         }
     }
-    $scope.pcCodeGrab = function(){
+    $scope.xb1CodeGrab = function(){
         try{
 
             var codez = '';
@@ -101,7 +112,15 @@ app.controller('homeController', function($scope){
             });
 
         } catch(err){
-            console.log('Something went wrong: ' + err);
+            const dialogOpts = {
+            		type: 'info',
+            		message: 'Something went wrong...',
+            		detail: 'Error: ' + err
+            	}
+            dialog.showMessageBox(dialogOpts);
         }
     }
+
+    // FOR TWITTER INTEGRATION
+    $scope.twitterPost = twitterPost;
 });

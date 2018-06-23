@@ -5,25 +5,43 @@ color
 rgba(59,65,79, 1) #3B414F
 #e2bc48
 */
-@import url('https://fonts.googleapis.com/css?family=Open+Sans+Condensed|Raleway');
+@import url('https://fonts.googleapis.com/css?family=Open+Sans+Condensed|Raleway|Work+Sans|Maven+Pro');
 @font-face {
   font-family: 'Sugoe UI';
   src:  url('../fonts/Segoe UI.ttf') format('truetype');
 }
+@font-face {
+  font-family: 'FreeSet';
+  src:  url('../fonts/freeset.ttf') format('truetype');
+}
+@font-face {
+  font-family: 'MintType';
+  src:  url('../fonts/MintType.otf') format('opentype');
+
+}
+@font-face {
+  font-family: 'Sansation';
+  src:  url('../fonts/Glober.otf') format('opentype');
+}
 html{
     margin: 0;
     padding: 0;
+    height: 100%;
 }
 body{
     margin: 0;
     background-color: rgba(59,65,79, 1);
     font-size: 16px;
+    height: 100%;
 }
 
 /* FONT OVERHAUL */
 body, button, input{
-    font-family: 'Sugoe UI', 'Open Sans Condensed', sans-serif;
+    font-family:  'Maven Pro', 'Work Sans', 'FreeSet', 'Sugoe UI', 'Open Sans Condensed', sans-serif;
     font-weight: 500;
+}
+input[type=text]{
+    cursor: default;
 }
 
 
@@ -31,6 +49,7 @@ body, button, input{
     background-color: white;
 }
 .main-cont{
+    max-height: 95%;
     color: #f3f3f3;
 }
 .main-card{
@@ -48,7 +67,8 @@ body, button, input{
 .btn-main{
     margin: 1em;
     padding: 0.7em;
-    font-weight: 500;
+    font-weight: 400;
+    font-size: 16px;
     text-transform: uppercase;
     color: #f3f3f3;
     border: 2px solid #f3f3f3;
@@ -106,27 +126,41 @@ h1{
 }
 .icon-links, .x-icon{
     transition-duration: 0.3s;
-    color: #f3f3f3;
+    color: #c8c8c8;
     cursor: pointer;
 }
 .x-icon{
-    float: right;
+    padding: 0.2em;
 }
 .icon-links:visited{
-    color: #f3f3f3;
+    color: #c8c8c8;
 }
 .icon-links:focus{
-    color: #f3f3f3;
+    color: #c8c8c8;
 }
 .icon-links:hover{
     color: #e2bc48;
     transition-duration: 0.3s;
 }
 .x-icon:hover{
-    color: Tomato;
+    color: #ffffff;
     transition-duration: 0.3s;
 }
 .flexRow{
     display: flex;
     flex-flow: row;
+}
+.bottom-bar{
+    position: fixed;
+    left: 0;
+    bottom: 0;
+    width: 100%;
+    background-color: #3a3a3a;
+    padding: 0.5em;
+}
+.top-bar{
+    display: flex;
+    flex-flow: row nowrap;
+    width: 100%;
+    justify-content: flex-end;
 }
