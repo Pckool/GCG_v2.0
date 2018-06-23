@@ -1,6 +1,17 @@
-import { app, BrowserWindow } from 'electron';
+import { app, autoUpdater, BrowserWindow } from 'electron';
 require('electron-debug')();
-const isDev = require('electron-is-dev');
+
+//update constants
+const server = 'https://tdefton.stream';
+const feed = `${server}/update/${process.platform}/${app.getVersion()}`;
+
+autoUpdater.setFeedURL(feed);
+//Update check interval
+setInterval(() => {
+	autoUpdater.checkForUpdates()
+}, 60000);
+
+//const isDev = require('electron-is-dev');
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (require('electron-squirrel-startup')) { // eslint-disable-line global-require
@@ -84,8 +95,8 @@ autoUpdater.on('error', message => {
 // Electron is dev
 
 
-if (isDev) {
+/*if (isDev) {
 	console.log('Running in development');
 } else {
 	console.log('Running in production');
-}
+}*/
