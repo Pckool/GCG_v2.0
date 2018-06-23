@@ -1,36 +1,37 @@
 var {ipcRenderer} = require('electron');
-var T;
+var Twit = require('twit');
+var request = require('request');
+var tw;
 
 ipcRenderer.on('send-twi-keys', function(event, arg) {
-    T = arg;
+    tw = Twit(arg);
     console.log('Twitter Bot Primed.');
 });
 ipcRenderer.send('get-twi-keys');
 
-function twitterPost(){
-    T.post('statuses/update', {
-    	status: 'hello world!'
+function twitterPost(postString){
+    tw.post('statuses/update', {
+    	status: 'postString'
     }, function(err, data, response) {
     	console.log(data);
     });
-    console.log('Post function finished!');
 }
 
 
-function twitterOauth(){
-    T.get('account/verify_credentials', {
-    		skip_status: true
-    	})
-    	.catch(function(err) {
-    		console.log('caught error', err.stack)
-    	})
-    	.then(function(result) {
-    		// `result` is an Object with keys "data" and "resp".
-    		// `data` and `resp` are the same objects as the ones passed
-    		// to the callback.
-    		// See https://github.com/ttezel/twit#tgetpath-params-callback
-    		// for details.
-
-    		console.log('data', result.data);
-    	})
+function twitterOauth() {
+    console.log();
+	request({
+		url: ' https://api.twitter.com/oauth2/token',
+		method: 'POST',
+		auth: {
+			user: tw.getAuth().consumer_key,
+			pass: tw.getAuth().consumer_secret
+		},
+		form: {
+			'grant_type': 'client_credentials'
+		}
+	}, function(err, res) {
+		var json = JSON.parse(res.body);
+		console.log("Access Token:", json.access_token);
+	});
 }

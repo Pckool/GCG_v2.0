@@ -97,14 +97,13 @@ if (isDev) {
 var Twit = require('twit')
 
 ipcMain.on('get-twi-keys', (event, arg) => {
-    console.log('Recieved : ' + arg +'Sending Twitter Bot data...');
-    var T = new Twit({
+    console.log('Sending Twitter Bot data...');
+    var T = {
       consumer_key:         '0IxvGU3ZW5ui4WOOSns1aBCYf',
       consumer_secret:      'T2YUYViTBCUPWkmtVBLSvm15BTF6H4Pd9gvvr4PihSuJKV88Ub',
-      access_token:         '800188803210035200-qD0Q8k68lDcsFOfmkPt48ADrZ5Wc3jT',
-      access_token_secret:  'xd9IZkn9Pvmv5WInYanKih1YQGk2xAYqqZ5R5QWRnYi92',
-      timeout_ms:           60*1000,  // optional HTTP request timeout to apply to all requests.
-      strictSSL:            true,     // optional - requires SSL certificates to be valid.
-    });
+      app_only_auth:        true
+      // access_token:         '800188803210035200-qD0Q8k68lDcsFOfmkPt48ADrZ5Wc3jT',
+      // access_token_secret:  'xd9IZkn9Pvmv5WInYanKih1YQGk2xAYqqZ5R5QWRnYi92'
+    };
     event.sender.send('send-twi-keys', T);
 });
