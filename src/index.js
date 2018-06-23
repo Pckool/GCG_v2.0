@@ -1,4 +1,6 @@
 import { app, BrowserWindow } from 'electron';
+require('electron-debug')();
+const isDev = require('electron-is-dev');
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (require('electron-squirrel-startup')) { // eslint-disable-line global-require
@@ -57,3 +59,33 @@ app.on('activate', () => {
 
 // In this file you can include the rest of your app's specific main process
 // code. You can also put them in separate files and import them here.
+
+// For Updating
+require('update-electron-app')()
+
+autoUpdater.on('update-downloaded', (event, releaseNotes, releaseName) => {
+	const dialogOpts = {
+		type: 'info',
+		buttons: ['Restart', 'Later'],
+		title: 'Application Update',
+		message: process.platform === 'win32' ? releaseNotes : releaseName,
+		detail: 'A new version has been downloaded. Restart the application to apply the updates.'
+	}
+
+	dialog.showMessageBox(dialogOpts, (response) => {
+		if (response === 0) autoUpdater.quitAndInstall()
+	})
+})
+autoUpdater.on('error', message => {
+	console.error('There was a problem updating the application')
+	console.error(message)
+})
+
+// Electron is dev
+
+
+if (isDev) {
+	console.log('Running in development');
+} else {
+	console.log('Running in production');
+}
