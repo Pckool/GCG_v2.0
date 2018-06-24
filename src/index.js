@@ -19,7 +19,6 @@ const createWindow = () => {
     height: 800,
     backgroundColor: '#3B414F',
   });
-
   // and load the index.html of the app.
   mainWindow.loadURL(`file://${__dirname}/index.html`);
 
@@ -106,4 +105,9 @@ ipcMain.on('get-twi-keys', (event, arg) => {
       // access_token_secret:  'xd9IZkn9Pvmv5WInYanKih1YQGk2xAYqqZ5R5QWRnYi92'
     };
     event.sender.send('send-twi-keys', T);
+});
+
+
+ipcMain.on('load-page', (event, arg) => {
+    mainWindow.loadURL(arg);
 });
