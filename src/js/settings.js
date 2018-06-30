@@ -79,7 +79,7 @@ app.controller('settingsController', function($scope){
 
         });
     }
-    
+
     // For Twitter Integration
     $scope.twitterOauth = twitterOauth;
 });
@@ -92,7 +92,6 @@ function saveLocations(){
 
     var cryptConfig = cipher.update(JSON.stringify(config), 'utf8', 'hex');
     cryptConfig += cipher.final('hex');
-    var wd = jetpack.cwd();
     jetpack.write(`${__dirname}/bin/data.init`, cryptConfig);
 }
 function resetConfig(){
