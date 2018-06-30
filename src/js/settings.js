@@ -10,9 +10,7 @@ const keyPass = 'WarframeFanChannels';
 var config = {
     'pc': '',
     'ps4': '',
-    'xb1': '',
-    'token': '',
-    'secret': ''
+    'xb1': ''
 }
 app.controller('settingsController', function($scope){
     document.onresize = correctContSize;
@@ -81,14 +79,14 @@ app.controller('settingsController', function($scope){
     }
 
     // For Twitter Integration
-    $scope.twitterOauth = twitterOauth;
+
 });
 
 function saveLocations(){
     config['pc'] = pcLocation;
     config['ps4'] = ps4Location;
     config['xb1'] = xb1Location;
-    var cipher = crypto.createCipher('aes-128-cbc', keyPass); // Issue here
+    var cipher = crypto.createCipher('aes-128-cbc', keyPass);
 
     var cryptConfig = cipher.update(JSON.stringify(config), 'utf8', 'hex');
     cryptConfig += cipher.final('hex');
@@ -99,6 +97,7 @@ function resetConfig(){
     ps4Location = '';
     xb1Location = '';
     saveLocations();
+    ipcRenderer.send('clearTwitterAuth');
 }
 function LoadConfig(){
     try{

@@ -6,7 +6,11 @@ var fs = require('fs');
 var url = require('url');
 var mime = require('mime');
 var path = require('path');
-var queryString = require('query-string');
+var queryString = require('query-string');         // An easy way to parse URL queries
+const twitterAPI = require('node-twitter-api');    // Twitter Authenticator
+var twit = require('twit');                        // Twitter Interface
+var T;                                             // The Twitter Bot
+var twitDataLoc = `${__dirname}/bin/tw.dat`;       // Directory of the twitter data file
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (require('electron-squirrel-startup')) { // eslint-disable-line global-require
@@ -41,7 +45,7 @@ const createWindow = () => {
 	});
 
     // Twitter data json init
-    fs.access(`${__dirname}/bin/tw.dat`, fs.constants.F_OK, (err) => {
+    fs.access(twitDataLoc, fs.constants.F_OK, (err) => {
         if(err){
             var twitData = {
                 consumer_key:     '0IxvGU3ZW5ui4WOOSns1aBCYf',
@@ -52,7 +56,7 @@ const createWindow = () => {
                 access_token:     '',
                 access_secret:    ''
             }
-            fs.writeFile(`${__dirname}/bin/tw.dat`, JSON.stringify(twitData), (err) => {
+            fs.writeFile(twitDataLoc, JSON.stringify(twitData), (err) => {
                 if (err) {
                     console.log(err);
                     throw err;
@@ -62,6 +66,9 @@ const createWindow = () => {
             return;
         }
         console.log('Twitter Data file found! Loading now...');
+        fs.readFile(twitDataLoc, (err, data) => {
+            connectTwitter();
+        });
     });
 
 
@@ -109,21 +116,21 @@ if (isDev) {
 
 // Localized Server
 function handleRequest(req, res) {
-	var file = path.join(app.getAppPath(), req.url);
     let query = req.url.substr(1);
-    console.log(queryString.parse(query));
     var tokens = queryString.parse(query);
     if(tokens.oauth_token){
-        fs.readFile(`${__dirname}/bin/tw.dat`, (err, data) => {
+        fs.readFile(twitDataLoc, (err, data) => {
             let dat = JSON.parse(data);
             dat.verifier = tokens.oauth_verifier;
-            fs.writeFile(`${__dirname}/bin/tw.dat`, dat, (err) => {
+            fs.writeFile(twitDataLoc, JSON.stringify(dat), (err) => {
                 if(err) throw err;
                 console.log('Saved Twitter Data... Proceeding to final step.');
+                getAccessTokens();
             });
         });
     }
 
+    var file = path.join(app.getAppPath(), req.url);
 	fs.exists(file, function(exists) {
 		if (exists && fs.lstatSync(file).isFile()) {
 
@@ -135,32 +142,51 @@ function handleRequest(req, res) {
 			return;
 		}
 		res.writeHead(404);
-		res.write('404 Not Found. But the server exists!');
+		res.write('Verifying, Please Wait...');
 		res.end();
 	});
 }
 var server = http.createServer(handleRequest);
 server.listen(8888, function() {
-	console.log('server started at http://localhost:8888');
+	console.log('HTTP server started at http://localhost:8888');
 });
 
 // Twitter API data
 const TwitterApi = require('node-twitter-signin');
+var twitter;
 
 ipcMain.on('get-twi-keys', (event, arg) => {
-    fs.readFile(`${__dirname}/bin/tw.dat`, (err, data) => {
+    fs.readFile(twitDataLoc, (err, data) => {
         let dat = JSON.parse(data);
-        console.log('Sending Twitter Bot data...');
-        var T = {
-          consumer_key:         dat.consumer_key,
-          consumer_secret:      dat.consumer_secret,
-          app_only_auth:        true
-        };
-        event.sender.send('send-twi-keys', T);
+        // tw = Twit(arg);
+        twitter = new twitterAPI({
+            consumerKey: dat.consumer_key,
+            consumerSecret: dat.consumer_secret,
+            callback: 'http://localhost:8888'
+        });
+    	console.log('Twitter Bot Primed.');
     });
 });
 
 ipcMain.on('load-page', (event, arg) => {
+    twitter.getRequestToken( (err, requestToken, requestTokenSecret, results) => {
+        if(err){
+            console.log('Error getting the OAuth request Token...');
+        }
+        else{
+            fs.readFile(twitDataLoc, function(err, data){
+                let dat = JSON.parse(data);
+                dat.request_token = requestToken
+                dat.request_secret = requestTokenSecret
+                child.loadURL('https://twitter.com/oauth/authenticate?oauth_token=' + requestToken);
+                fs.writeFile(twitDataLoc, JSON.stringify(dat), (err) => {
+                    if(err) throw err;
+                    console.log('Updated Twitter Auth Data');
+                });
+            });
+        }
+    });
+    console.log('Loading a secure Login Page...');
     child = new BrowserWindow({
         parent: mainWindow,
         modal: true,
@@ -170,7 +196,7 @@ ipcMain.on('load-page', (event, arg) => {
         autoHideMenuBar: true,
         alwaysOnTop: true
     });
-    child.loadURL('https://twitter.com/oauth/authenticate?oauth_token=' + arg);
+    // child.loadURL('https://twitter.com/oauth/authenticate?oauth_token=' + arg);
     child.once('ready-to-show', () => {
         mainWindow.setEnabled(false);
         child.show();
@@ -179,14 +205,71 @@ ipcMain.on('load-page', (event, arg) => {
     child.on('closed', () => {
         mainWindow.setEnabled(true);
     });
-    event.sender.send('loaded-page', child);
+
+
+    event.sender.send('loaded-page', 'Secure Login Page Loaded...');
 });
 
-ipcMain.on('open-login', (event, arg) => {
-    // const oauth = require('oauth-electron-twitter').oauth;
-    // const twitter = require('oauth-electron-twitter').twitter;
-    // var auth = new oauth();
-    // let keys = auth.login(arg, child);
-    // event.sender.send('store-keys', keys);
+function getAccessTokens(){
+    fs.readFile(twitDataLoc, (err, data) => {
+        let dat = JSON.parse(data);
+        twitter.getAccessToken(dat.request_token, dat.request_secret, dat.verifier, (err, accessToken, accessSecret, results) => {
+            if(err) throw err;
+            else{
+                dat.access_token = accessToken;
+                dat.access_secret = accessSecret;
+                fs.writeFile(twitDataLoc, JSON.stringify(dat), (err) => {
+                    if(err) throw err;
+                    console.log('Saved twitter auth.');
+                    child.close();
+                    twitVerify();
+                });
+            }
+        });
+    });
+}
 
-});
+function twitVerify(){
+    fs.readFile(twitDataLoc, (err, data) => {
+        let dat = JSON.parse(data);
+        twitter.verifyCredentials(dat.access_token, dat.access_secret, {}, function(err, data, response){
+            if(err) throw err;
+            else{
+                console.log(data['screen_name']);
+            }
+        });
+    });
+}
+
+function clearTwitterData(event){
+    var twitData = {
+        consumer_key:     '0IxvGU3ZW5ui4WOOSns1aBCYf',
+        consumer_secret:  'T2YUYViTBCUPWkmtVBLSvm15BTF6H4Pd9gvvr4PihSuJKV88Ub',
+        request_token:    '',
+        request_secret:   '',
+        verifier:         '',
+        access_token:     '',
+        access_secret:    ''
+    }
+    fs.writeFile(twitDataLoc, JSON.stringify(twitData), (err) => {
+        if (err) {
+            console.log(err);
+            throw err;
+        }
+        console.log('Twitter Data Reset')
+    });
+}
+ipcMain.on('clearTwitterAuth', clearTwitterData);
+
+function connectTwitter(){
+    fs.readFile(twitDataLoc, (err, data) => {
+        let dat = JSON.parse(data);
+        T = new twit({
+            onsumer_key:          dat.consumer_key,
+            consumer_secret:      dat.consumer_secret,
+            access_token:         dat.access_token,
+            access_token_secret:  dat.access_secret,
+            strictSSL: true
+        });
+    });
+}

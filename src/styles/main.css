@@ -3,6 +3,7 @@ color
 #f3f3f3
 #3a3a3a
 rgba(59,65,79, 1) #3B414F
+rgba(20, 23,26, 1) #14171A
 #e2bc48
 */
 @import url('https://fonts.googleapis.com/css?family=Open+Sans+Condensed|Raleway|Work+Sans|Maven+Pro');
@@ -79,9 +80,15 @@ input[type=text]{
     text-decoration: none;
 }
 .btn-main:hover{
+    transition-duration: 0.3s;
+}
+.btn-color-gold:hover{
     color: #e2bc48;
     border-color: #e2bc48;
-    transition-duration: 0.3s;
+}
+.btn-color-blue:hover{
+    color: #1DA1F2;
+    border-color: #1DA1F2;
 }
 .slider {
     -webkit-appearance: none;  /* Override default CSS styles */
