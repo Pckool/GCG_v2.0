@@ -1,6 +1,6 @@
 import { app, autoUpdater, BrowserWindow, ipcMain } from 'electron';
 require('electron-debug')();
-require('electron-reload')(__dirname);
+//require('electron-reload')(__dirname);
 var http = require('http');
 var fs = require('fs');
 var url = require('url');
@@ -233,18 +233,23 @@ function getAccessTokens(){
     });
 }
 
-function twitVerify(){
+function twitVerify(event){
     fs.readFile(twitDataLoc, (err, data) => {
         let dat = JSON.parse(data);
         twitter.verifyCredentials(dat.access_token, dat.access_secret, {}, function(err, data, response){
-            if(err) throw err;
+            if(err){
+                if(event) event.sender.send('twit-authed', false);
+                console.log('Error when verifying twitter credentials: ' + err);
+            }
             else{
                 console.log('Connected to Twitter account: ' + data['screen_name']);
                 connectTwitter();
+                if(event) event.sender.send('twit-authed', true);
             }
         });
     });
 }
+ipcMain.on('verify-twit-auth', twitVerify);
 
 function clearTwitterData(event){
     var twitData = {

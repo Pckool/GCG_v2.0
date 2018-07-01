@@ -2,6 +2,7 @@ const util = require('util');
 import copy from 'copy-to-clipboard';
 
 app.controller('homeController', function($scope){
+    correctContSize();
     $scope.slider = document.getElementById("numCodes"); // Sets th slider to a value in $scope
     $scope.sliderValue = parseInt($scope.slider.value); // Display the slider value
 
@@ -26,7 +27,7 @@ app.controller('homeController', function($scope){
                 codes = codes + 'PC: ' + pc;
             }
             else{
-                dialog.showErrorBox('No File Location Chosen!', 'You did not choose a PC Location! Please choose a location before trying to post codes on twitter!');
+                console.log('No File Location Chosen!', 'You did not choose a PC Location! Please choose a location before trying to post codes on twitter!');
             }
         }
         if($('#twitPostPS4Code:checked').length){
@@ -36,7 +37,7 @@ app.controller('homeController', function($scope){
                 codes = codes + 'PS4: ' + ps4;
             }
             else{
-                dialog.showErrorBox('No File Location Chosen!', 'You did not choose a PS4 ONE Location! Please choose a location before trying to post codes on twitter!');
+                console.log('No File Location Chosen!', 'You did not choose a PS4 ONE Location! Please choose a location before trying to post codes on twitter!');
             }
         }
         if($('#twitPostXB1Code:checked').length){
@@ -46,7 +47,7 @@ app.controller('homeController', function($scope){
                 codes = codes + 'XB1: ' + xb1;
             }
             else{
-                dialog.showErrorBox('No File Location Chosen!', 'You did not choose a XBOX ONE Location! Please choose a location before trying to post codes on twitter!');
+                console.log('No File Location Chosen!', 'You did not choose a XBOX ONE Location! Please choose a location before trying to post codes on twitter!');
             }
         }
 
@@ -67,6 +68,36 @@ app.controller('homeController', function($scope){
         $(item).on('click', updateNumLoc);
     });
     $scope.updateNumLoc = updateNumLoc;
+
+    ipcRenderer.on('twit-authed', function(event, authed){
+
+        if(authed === true){
+            $('#twitPostCodes').prop("disabled", false);
+            $('#twitPostCodes').toggleClass('btn-color-blue', true);
+            $('#twitPostCodes').toggleClass('btn-disabled', false);
+
+            $('#twitPostPCCode').prop('disabled', false);
+            // $('#twitPostPCCode').toggleClass('btn-disabled', false);
+            $('#twitPostPS4Code').prop('disabled', false);
+            // $('#twitPostPS4Code').toggleClass('btn-disabled', false);
+            $('#twitPostXB1Code').prop('disabled', false);
+            // $('#twitPostXB1Code').toggleClass('btn-disabled', false);
+        }
+        else{
+            $('#twitPostCodes').prop("disabled", true);
+            $('#twitPostCodes').toggleClass('btn-color-blue', false);
+            $('#twitPostCodes').toggleClass('btn-disabled', true);
+
+            $('#twitPostPCCode').prop('disabled', true);
+            // $('#twitPostPCCode').toggleClass('btn-disabled', true);
+            $('#twitPostPS4Code').prop('disabled', true);
+            // $('#twitPostPS4Code').toggleClass('btn-disabled', true);
+            $('#twitPostXB1Code').prop('disabled', true);
+            // $('#twitPostXB1Code').toggleClass('btn-disabled', true);
+        }
+    });
+
+
 });
 
 function pcCodeGrab(){
@@ -99,6 +130,7 @@ function pcCodeGrab(){
             return codez;
         }
         else{
+            dialog.showErrorBox('No File Location Chosen!', 'You did not choose a PC Location! Please choose a location before trying to grab codes!');
             return '';
         }
 
@@ -117,29 +149,36 @@ function ps4CodeGrab(){
 
         var codez = '';
         var newList = '';
-        fs.readFile(config['ps4'], function(err, text){
-            console.log(text);
-            var counter = 1;
-            text.toString().split('\n').forEach(function(ln){
-                if(err){
-                    throw err;
-                }
-                else if (counter <= $scope.sliderValue){
-                    console.log('Code ' + counter + ': ' + ln)
-                    codez += ln;
-                    counter++;
-                }
-                else if (counter > $scope.sliderValue){
-                    newList += ln + "\n";
-                }
-            });
-            console.log(codez);
-            copy(codez);
-            jetpack.write(config['ps4'], newList.trim());
-            counter = 0;
+        if(config['ps4']){
+            fs.readFile(config['ps4'], function(err, text){
+                console.log(text);
+                var counter = 1;
+                text.toString().split('\n').forEach(function(ln){
+                    if(err){
+                        throw err;
+                    }
+                    else if (counter <= $scope.sliderValue){
+                        console.log('Code ' + counter + ': ' + ln)
+                        codez += ln;
+                        counter++;
+                    }
+                    else if (counter > $scope.sliderValue){
+                        newList += ln + "\n";
+                    }
+                });
+                console.log(codez);
+                copy(codez);
+                jetpack.write(config['ps4'], newList.trim());
+                counter = 0;
 
-        });
-        return codez;
+            });
+            return codez;
+        }
+        else{
+            dialog.showErrorBox('No File Location Chosen!', 'You did not choose a PS4 ONE Location! Please choose a location before trying to grab codes!');
+            return '';
+        }
+
     } catch(err){
         const dialogOpts = {
                 type: 'info',
@@ -149,35 +188,40 @@ function ps4CodeGrab(){
         dialog.showMessageBox(dialogOpts);
     }
 }
-// Duplocate error handling in pc portion
+
 function xb1CodeGrab(){
     try{
 
         var codez = '';
         var newList = '';
-        fs.readFile(config['xb1'], function(err, text){
-            console.log(text);
-            var counter = 1;
-            text.toString().split('\n').forEach(function(ln){
-                if(err){
-                    throw err;
-                }
-                else if (counter <= $scope.sliderValue){
-                    console.log('Code ' + counter + ': ' + ln)
-                    codez += ln;
-                    counter++;
-                }
-                else if (counter > $scope.sliderValue){
-                    newList += ln + "\n";
-                }
+        if(config['xb1']){
+            fs.readFile(config['xb1'], function(err, text){
+                console.log(text);
+                var counter = 1;
+                text.toString().split('\n').forEach(function(ln){
+                    if(err){
+                        throw err;
+                    }
+                    else if (counter <= $scope.sliderValue){
+                        console.log('Code ' + counter + ': ' + ln)
+                        codez += ln;
+                        counter++;
+                    }
+                    else if (counter > $scope.sliderValue){
+                        newList += ln + "\n";
+                    }
+                });
+                console.log(codez);
+                copy(codez);
+                jetpack.write(config['xb1'], newList.trim());
+                counter = 0;
             });
-            console.log(codez);
-            copy(codez);
-            jetpack.write(config['xb1'], newList.trim());
-            counter = 0;
-        });
-        return codez;
-
+            return codez;
+        }
+        else{
+            dialog.showErrorBox('No File Location Chosen!', 'You did not choose a XBOX ONE Location! Please choose a location before trying to grab codes!');
+            return '';
+        }
     } catch(err){
         const dialogOpts = {
                 type: 'info',
@@ -187,4 +231,8 @@ function xb1CodeGrab(){
         dialog.showMessageBox(dialogOpts);
     }
 }
-// diplicate error handling in part 1
+
+$('#twitPostCodes').ready( () => {
+        console.log('DOM ready!');
+        ipcRenderer.send('verify-twit-auth');
+    });

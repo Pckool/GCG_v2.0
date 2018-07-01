@@ -145,9 +145,9 @@ input[type=checkbox]:checked:after {
     color: #1DA1F2;
     border-color: #1DA1F2;
 }
-.btn-disabled-blue{
-    color: #1DA1F2;
-    border-color: #1DA1F2;
+.btn-disabled{
+    color: #737373;
+    border-color: #737373;
     cursor: default;
 }
 .btn-color-red:hover{

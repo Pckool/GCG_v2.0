@@ -4,11 +4,13 @@
 ### Instructions on Use
 Check here https://tdefton.stream/gcg/documentation
 
-### Known Issues
-- logic only added for pc
+### In Development Now
+- Need to add more dialog boxes for interraction with the user.
+- More code optimization
+- Disabling and enabling elements at appropriate times
 
 ### For The Future
-- [ ] Need twitter integration
+- [X] Need twitter integration
 - [ ] Possibly Discord
 - [ ] Possibly Twitch
 - [ ] Twitch extention to interface with the app? (an easy way for viewers to redeem glyphs)

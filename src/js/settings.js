@@ -11,6 +11,7 @@ var config = {
     'xb1': ''
 }
 app.controller('settingsController', function($scope){
+    correctContSize();
     document.onresize = correctContSize;
 
     $scope.populateBoxes = function($scope){
@@ -96,6 +97,8 @@ function resetConfig(){
     xb1Location = '';
     saveLocations();
     ipcRenderer.send('clearTwitterAuth');
+
+    ipcRenderer.send('verify-twit-auth');
 }
 function LoadConfig(){
     try{
