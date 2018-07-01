@@ -12,10 +12,68 @@ app.controller('homeController', function($scope){
     }
     document.onresize = correctContSize;
 
-    $scope.pcCodeGrab = function(){
-        try{
-            var codez = '';
-            var newList = '';
+    $scope.pcCodeGrab = pcCodeGrab;
+    $scope.ps4CodeGrab = ps4CodeGrab;
+    $scope.xb1CodeGrab = xb1CodeGrab;
+
+    $scope.twitterMultiplier = 0;
+    // FOR TWITTER INTEGRATION
+    $scope.postCodes = function(){
+        let codes = '';
+        if($('#twitPostPCCode:checked').length){
+            let pc = pcCodeGrab();
+            if(pc){
+                codes = codes + 'PC: ' + pc;
+            }
+            else{
+                dialog.showErrorBox('No File Location Chosen!', 'You did not choose a PC Location! Please choose a location before trying to post codes on twitter!');
+            }
+        }
+        if($('#twitPostPS4Code:checked').length){
+            let ps4 = ps4CodeGrab();
+            if(ps4){
+                if(codes !== '') codes += '\n';
+                codes = codes + 'PS4: ' + ps4;
+            }
+            else{
+                dialog.showErrorBox('No File Location Chosen!', 'You did not choose a PS4 ONE Location! Please choose a location before trying to post codes on twitter!');
+            }
+        }
+        if($('#twitPostXB1Code:checked').length){
+            let xb1 = xb1CodeGrab();
+            if(xb1){
+                if(codes !== '') codes += '\n';
+                codes = codes + 'XB1: ' + xb1;
+            }
+            else{
+                dialog.showErrorBox('No File Location Chosen!', 'You did not choose a XBOX ONE Location! Please choose a location before trying to post codes on twitter!');
+            }
+        }
+
+        if(codes.length <= 280 && codes.length > 4){
+            twitterPost(codes);
+            console.log('codes posted successfully!');
+        }
+        else{
+            //dialog
+        }
+        copy('')
+    }
+    function updateNumLoc(event){
+        $scope.twitterMultiplier = $('.twitter-checkbox:checked').length;
+        console.log($scope.twitterMultiplier);
+    }
+    $('.twitter-checkbox').each( (i, item) => {
+        $(item).on('click', updateNumLoc);
+    });
+    $scope.updateNumLoc = updateNumLoc;
+});
+
+function pcCodeGrab(){
+    try{
+        var codez = '';
+        var newList = '';
+        if(config['pc']){
             fs.readFile(config['pc'], function(err, text){
                 console.log(text);
                 var counter = 1;
@@ -36,90 +94,97 @@ app.controller('homeController', function($scope){
                 copy(codez);
                 jetpack.write(config['pc'], newList.trim());
                 counter = 0;
+
             });
-
-        } catch(err){
-            const dialogOpts = {
-            		type: 'info',
-            		message: 'Something went wrong...',
-            		detail: 'Error: ' + err
-            	}
-            dialog.showMessageBox(dialogOpts);
+            return codez;
         }
-    }
-    $scope.ps4CodeGrab = function(){
-        try{
+        else{
+            return '';
+        }
 
-            var codez = '';
-            var newList = '';
-            fs.readFile(config['ps4'], function(err, text){
-                console.log(text);
-                var counter = 1;
-                text.toString().split('\n').forEach(function(ln){
-                    if(err){
-                        throw err;
-                    }
-                    else if (counter <= $scope.sliderValue){
-                        console.log('Code ' + counter + ': ' + ln)
-                        codez += ln;
-                        counter++;
-                    }
-                    else if (counter > $scope.sliderValue){
-                        newList += ln + "\n";
-                    }
-                });
-                console.log(codez);
-                copy(codez);
-                jetpack.write(config['ps4'], newList.trim());
-                counter = 0;
+    } catch(err){
+        const dialogOpts = {
+                type: 'info',
+                message: 'Something went wrong...',
+                detail: 'Error: ' + err
+            }
+        dialog.showMessageBox(dialogOpts);
+    }
+}
+
+function ps4CodeGrab(){
+    try{
+
+        var codez = '';
+        var newList = '';
+        fs.readFile(config['ps4'], function(err, text){
+            console.log(text);
+            var counter = 1;
+            text.toString().split('\n').forEach(function(ln){
+                if(err){
+                    throw err;
+                }
+                else if (counter <= $scope.sliderValue){
+                    console.log('Code ' + counter + ': ' + ln)
+                    codez += ln;
+                    counter++;
+                }
+                else if (counter > $scope.sliderValue){
+                    newList += ln + "\n";
+                }
             });
+            console.log(codez);
+            copy(codez);
+            jetpack.write(config['ps4'], newList.trim());
+            counter = 0;
 
-        } catch(err){
-            const dialogOpts = {
-            		type: 'info',
-            		message: 'Something went wrong...',
-            		detail: 'Error: ' + err
-            	}
-            dialog.showMessageBox(dialogOpts);
-        }
+        });
+        return codez;
+    } catch(err){
+        const dialogOpts = {
+                type: 'info',
+                message: 'Something went wrong...',
+                detail: 'Error: ' + err
+            }
+        dialog.showMessageBox(dialogOpts);
     }
-    $scope.xb1CodeGrab = function(){
-        try{
+}
+// Duplocate error handling in pc portion
+function xb1CodeGrab(){
+    try{
 
-            var codez = '';
-            var newList = '';
-            fs.readFile(config['xb1'], function(err, text){
-                console.log(text);
-                var counter = 1;
-                text.toString().split('\n').forEach(function(ln){
-                    if(err){
-                        throw err;
-                    }
-                    else if (counter <= $scope.sliderValue){
-                        console.log('Code ' + counter + ': ' + ln)
-                        codez += ln;
-                        counter++;
-                    }
-                    else if (counter > $scope.sliderValue){
-                        newList += ln + "\n";
-                    }
-                });
-                console.log(codez);
-                copy(codez);
-                jetpack.write(config['xb1'], newList.trim());
-                counter = 0;
+        var codez = '';
+        var newList = '';
+        fs.readFile(config['xb1'], function(err, text){
+            console.log(text);
+            var counter = 1;
+            text.toString().split('\n').forEach(function(ln){
+                if(err){
+                    throw err;
+                }
+                else if (counter <= $scope.sliderValue){
+                    console.log('Code ' + counter + ': ' + ln)
+                    codez += ln;
+                    counter++;
+                }
+                else if (counter > $scope.sliderValue){
+                    newList += ln + "\n";
+                }
             });
+            console.log(codez);
+            copy(codez);
+            jetpack.write(config['xb1'], newList.trim());
+            counter = 0;
+        });
+        return codez;
 
-        } catch(err){
-            const dialogOpts = {
-            		type: 'info',
-            		message: 'Something went wrong...',
-            		detail: 'Error: ' + err
-            	}
-            dialog.showMessageBox(dialogOpts);
-        }
+    } catch(err){
+        const dialogOpts = {
+                type: 'info',
+                message: 'Something went wrong...',
+                detail: 'Error: ' + err
+            }
+        dialog.showMessageBox(dialogOpts);
     }
-
-    // FOR TWITTER INTEGRATION
-    $scope.twitterPost = twitterPost;
-});
+}
+// diplicate error handling in part 1

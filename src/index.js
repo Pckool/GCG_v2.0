@@ -66,8 +66,12 @@ const createWindow = () => {
             return;
         }
         console.log('Twitter Data file found! Loading now...');
+
         fs.readFile(twitDataLoc, (err, data) => {
-            connectTwitter();
+            let dat = JSON.parse(data);
+            if(dat.access_token && dat.access_secret){
+                connectTwitter();
+            }
         });
     });
 
@@ -205,10 +209,10 @@ ipcMain.on('load-page', (event, arg) => {
     child.on('closed', () => {
         mainWindow.setEnabled(true);
     });
-
-
-    event.sender.send('loaded-page', 'Secure Login Page Loaded...');
+    event.sender.send('finished-twit-auth', 'Secure Login Page Loaded...');
+    event.sender.send('back-to-home');
 });
+
 
 function getAccessTokens(){
     fs.readFile(twitDataLoc, (err, data) => {
@@ -235,7 +239,8 @@ function twitVerify(){
         twitter.verifyCredentials(dat.access_token, dat.access_secret, {}, function(err, data, response){
             if(err) throw err;
             else{
-                console.log(data['screen_name']);
+                console.log('Connected to Twitter account: ' + data['screen_name']);
+                connectTwitter();
             }
         });
     });
@@ -263,13 +268,40 @@ ipcMain.on('clearTwitterAuth', clearTwitterData);
 
 function connectTwitter(){
     fs.readFile(twitDataLoc, (err, data) => {
-        let dat = JSON.parse(data);
-        T = new twit({
-            onsumer_key:          dat.consumer_key,
-            consumer_secret:      dat.consumer_secret,
-            access_token:         dat.access_token,
-            access_token_secret:  dat.access_secret,
-            strictSSL: true
-        });
+        if(err) throw err;
+        else{
+            let dat = JSON.parse(data);
+            T = new twit({
+                consumer_key:         dat.consumer_key,
+                consumer_secret:      dat.consumer_secret,
+                access_token:         dat.access_token,
+                access_token_secret:  dat.access_secret,
+                strictSSL: true
+            });
+            T.get('account/verify_credentials', {
+                skip_status: true
+            }).catch( (err) => {
+                if(err) throw err;
+                console.log(err);
+            }).then( (result) => {
+                console.log('I logged into the Twitter account of: ' + result.data['screen_name']);
+            });
+        }
+
     });
 }
+ipcMain.on('connect-to-twitter', connectTwitter);
+
+function twitterPost(event, postStatus){
+    T.post('statuses/update', {
+        status: postStatus
+    }, function(err, data, response){
+        if(err) throw err;
+        else{
+            console.log(data);
+            event.sender.send('twitter-posted-data', data);
+        }
+
+    });
+}
+ipcMain.on('twitter-post', twitterPost);

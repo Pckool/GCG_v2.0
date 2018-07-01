@@ -1,7 +1,5 @@
 const crypto = require('crypto');
 const jetpack = require('fs-jetpack');
-//const $ = require('jquery');
-const {dialog} = require('electron').remote;
 
 var pcLocation;
 var ps4Location;
