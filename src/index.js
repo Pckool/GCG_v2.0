@@ -1,6 +1,6 @@
-import { app, autoUpdater, BrowserWindow, ipcMain } from 'electron';
+import { app, autoUpdater, BrowserWindow, ipcMain, dialog } from 'electron';
 require('electron-debug')();
-//require('electron-reload')(__dirname);
+require('electron-reload')(__dirname);
 var http = require('http');
 var fs = require('fs');
 var url = require('url');
@@ -9,8 +9,11 @@ var path = require('path');
 var queryString = require('query-string');         // An easy way to parse URL queries
 const twitterAPI = require('node-twitter-api');    // Twitter Authenticator
 var twit = require('twit');                        // Twitter Interface
+const cryptoJS = require('crypto-js');             // For cyphers
+
 var T;                                             // The Twitter Bot
 var twitDataLoc = `${__dirname}/bin/tw.dat`;       // Directory of the twitter data file
+const keyPass = 'WarframeFanChannels';             // Password for encryption
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (require('electron-squirrel-startup')) { // eslint-disable-line global-require
@@ -27,7 +30,9 @@ const createWindow = () => {
 	mainWindow = new BrowserWindow({
 		width: 600,
 		height: 800,
+        minWidth: 350,
 		backgroundColor: '#3B414F',
+        autoHideMenuBar: true,
 	});
 
 	// and load the index.html of the app.
@@ -56,9 +61,15 @@ const createWindow = () => {
                 access_token:     '',
                 access_secret:    ''
             }
-            fs.writeFile(twitDataLoc, JSON.stringify(twitData), (err) => {
+            var dat = JSON.stringify(twitData);
+            let dec = encryptData(0, {value: dat});
+            fs.writeFile(twitDataLoc, dec, (err) => {
                 if (err) {
                     console.log(err);
+                    fs.unlink(twitDataLoc, (err) => {
+                        if(err) throw err;
+                        console.log('Removed the file I just tried to make.');
+                    });
                     throw err;
                 }
                 console.log('Made the new file')
@@ -68,10 +79,16 @@ const createWindow = () => {
         console.log('Twitter Data file found! Loading now...');
 
         fs.readFile(twitDataLoc, (err, data) => {
-            let dat = JSON.parse(data);
-            if(dat.access_token && dat.access_secret){
-                connectTwitter();
+            if(err){
+                throw err;
             }
+            else{
+                let dat = JSON.parse(decryptData(0, {value: data}));
+                if(dat.access_token && dat.access_secret){
+                    connectTwitter();
+                }
+            }
+
         });
     });
 
@@ -103,7 +120,7 @@ app.on('activate', () => {
 // In this file you can include the rest of your app's specific main process
 // code. You can also put them in separate files and import them here.
 
-// For Updating
+// For Updating ----------------------------------------------------------------
 require('update-electron-app')({
   updateInterval: '10 minutes',
   logger: require('electron-log')
@@ -118,15 +135,18 @@ if (isDev) {
 	console.log('Running in production');
 }
 
-// Localized Server
+// Localized Server ------------------------------------------------------------
 function handleRequest(req, res) {
     let query = req.url.substr(1);
     var tokens = queryString.parse(query);
     if(tokens.oauth_token){
         fs.readFile(twitDataLoc, (err, data) => {
-            let dat = JSON.parse(data);
+            if(err) throw err;
+            let dat = JSON.parse(decryptData(0, {value: data}));
             dat.verifier = tokens.oauth_verifier;
-            fs.writeFile(twitDataLoc, JSON.stringify(dat), (err) => {
+            dat = JSON.stringify(dat)
+            let dec = encryptData(0, {value: dat});
+            fs.writeFile(twitDataLoc, dec, (err) => {
                 if(err) throw err;
                 console.log('Saved Twitter Data... Proceeding to final step.');
                 getAccessTokens();
@@ -155,20 +175,54 @@ server.listen(8888, function() {
 	console.log('HTTP server started at http://localhost:8888');
 });
 
-// Twitter API data
+
+// Encryption ------------------------------------------------------------------
+function encryptData(event, arg){
+    try{
+        var encrpt = cryptoJS.AES.encrypt(arg.value, keyPass);
+        if(event !== 0)
+            event.sender.send('encrypted-data', encrpt.toString());
+        return encrpt;
+    }
+    catch(err){
+        dialog.showErrorBox('Something Went Wrong...', 'Something wasn\'t encrypted properly. Please report this to TDefton!\nError: ' + err.stack);
+    }
+}
+ipcMain.on('encrypt-data', encryptData);
+
+function decryptData(event, arg){
+    try{
+        var bytes = cryptoJS.AES.decrypt(arg.value.toString(), keyPass);
+        var decrpt = bytes.toString(cryptoJS.enc.Utf8);
+        if(event !== 0)
+            event.sender.send('decrypted-data', decrpt);
+        return decrpt;
+    }
+    catch(err){
+        dialog.showErrorBox('Issue Decrypting Some Data', 'Something wasn\'t decrypted properly. Please report this to TDefton!\n\n' + err.stack);
+    }
+}
+ipcMain.on('decrypt-data', decryptData);
+
+
+// Twitter API data ------------------------------------------------------------
 const TwitterApi = require('node-twitter-signin');
 var twitter;
 
-ipcMain.on('get-twi-keys', (event, arg) => {
+ipcMain.on('get-twi-keys', (event) => {
     fs.readFile(twitDataLoc, (err, data) => {
-        let dat = JSON.parse(data);
-        // tw = Twit(arg);
-        twitter = new twitterAPI({
-            consumerKey: dat.consumer_key,
-            consumerSecret: dat.consumer_secret,
-            callback: 'http://localhost:8888'
-        });
-    	console.log('Twitter Bot Primed.');
+        if(err){throw err}
+        else{
+            let da = decryptData(0, {value: data});
+            let dat = JSON.parse(da);
+            twitter = new twitterAPI({
+                consumerKey: dat.consumer_key,
+                consumerSecret: dat.consumer_secret,
+                callback: 'http://localhost:8888'
+            });
+        	console.log('Twitter Bot Primed.');
+        }
+
     });
 });
 
@@ -178,12 +232,15 @@ ipcMain.on('load-page', (event, arg) => {
             console.log('Error getting the OAuth request Token...');
         }
         else{
-            fs.readFile(twitDataLoc, function(err, data){
-                let dat = JSON.parse(data);
+            fs.readFile(twitDataLoc, (err, data) => {
+                let da = decryptData(0, {value: data});
+                let dat = JSON.parse(da);
                 dat.request_token = requestToken
                 dat.request_secret = requestTokenSecret
                 child.loadURL('https://twitter.com/oauth/authenticate?oauth_token=' + requestToken);
-                fs.writeFile(twitDataLoc, JSON.stringify(dat), (err) => {
+                dat = JSON.stringify(dat);
+                let dec = encryptData(0, {value: dat});
+                fs.writeFile(twitDataLoc, dec, (err) => {
                     if(err) throw err;
                     console.log('Updated Twitter Auth Data');
                 });
@@ -216,13 +273,16 @@ ipcMain.on('load-page', (event, arg) => {
 
 function getAccessTokens(){
     fs.readFile(twitDataLoc, (err, data) => {
-        let dat = JSON.parse(data);
+        if(err) throw err;
+        let dat = JSON.parse(decryptData(0, {value: data}));
         twitter.getAccessToken(dat.request_token, dat.request_secret, dat.verifier, (err, accessToken, accessSecret, results) => {
             if(err) throw err;
             else{
                 dat.access_token = accessToken;
                 dat.access_secret = accessSecret;
-                fs.writeFile(twitDataLoc, JSON.stringify(dat), (err) => {
+                dat = JSON.stringify(dat);
+                let dec = encryptData(0, {value: dat});
+                fs.writeFile(twitDataLoc, dec, (err) => {
                     if(err) throw err;
                     console.log('Saved twitter auth.');
                     child.close();
@@ -235,11 +295,11 @@ function getAccessTokens(){
 
 function twitVerify(event){
     fs.readFile(twitDataLoc, (err, data) => {
-        let dat = JSON.parse(data);
+        let dat = JSON.parse(decryptData(0, {value: data}));
         twitter.verifyCredentials(dat.access_token, dat.access_secret, {}, function(err, data, response){
             if(err){
                 if(event) event.sender.send('twit-authed', false);
-                console.log('Error when verifying twitter credentials: ' + err);
+                console.log('Error while verifying twitter credentials: ' + err.stack);
             }
             else{
                 console.log('Connected to Twitter account: ' + data['screen_name']);
@@ -261,7 +321,9 @@ function clearTwitterData(event){
         access_token:     '',
         access_secret:    ''
     }
-    fs.writeFile(twitDataLoc, JSON.stringify(twitData), (err) => {
+    dat = JSON.stringify(dat);
+    let dec = encryptData(0, {value: dat});
+    fs.writeFile(twitDataLoc, dec, (err) => {
         if (err) {
             console.log(err);
             throw err;
@@ -275,7 +337,7 @@ function connectTwitter(){
     fs.readFile(twitDataLoc, (err, data) => {
         if(err) throw err;
         else{
-            let dat = JSON.parse(data);
+            let dat = JSON.parse(decryptData(0, {value: data}));
             T = new twit({
                 consumer_key:         dat.consumer_key,
                 consumer_secret:      dat.consumer_secret,

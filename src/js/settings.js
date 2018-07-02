@@ -1,23 +1,24 @@
 const crypto = require('crypto');
 const jetpack = require('fs-jetpack');
 
-var pcLocation;
-var ps4Location;
-var xb1Location;
+var pcLocation = '';
+var ps4Location = '';
+var xb1Location = '';
 const keyPass = 'WarframeFanChannels';
 var config = {
-    'pc': '',
-    'ps4': '',
-    'xb1': ''
+    pc: '',
+    ps4: '',
+    xb1: ''
 }
 app.controller('settingsController', function($scope){
     correctContSize();
     document.onresize = correctContSize;
+    configCheck();
 
     $scope.populateBoxes = function($scope){
-        $scope.pcLocation = config['pc'];
-        $scope.ps4Location = config['ps4'];
-        $scope.xb1Location = config['xb1'];
+        $scope.pcLocation = config.pc;
+        $scope.ps4Location = config.ps4;
+        $scope.xb1Location = config.xb1;
     }
     $scope.populateBoxes($scope);
 
@@ -26,7 +27,7 @@ app.controller('settingsController', function($scope){
             defaultPath: 'C:/',
             filters: [{
                 name: 'Glyph Codes',
-                extensions: ['txt', 'csv']
+                extensions: ['txt', 'csv', 'tsv']
             }]
         },function(fileLocation){
             try {
@@ -45,7 +46,7 @@ app.controller('settingsController', function($scope){
             defaultPath: 'C:/',
             filters: [{
                 name: 'Glyph Codes',
-                extensions: ['txt', 'csv']
+                extensions: ['txt', 'csv', 'tsv']
             }]
         },function(fileLocation){
             try{
@@ -63,7 +64,7 @@ app.controller('settingsController', function($scope){
             defaultPath: 'C:/',
             filters: [{
                 name: 'Glyph Codes',
-                extensions: ['txt', 'csv']
+                extensions: ['txt', 'csv', 'tsv']
             }]
         },function(fileLocation){
             try{
@@ -76,20 +77,20 @@ app.controller('settingsController', function($scope){
 
         });
     }
-
     // For Twitter Integration
-
 });
 
 function saveLocations(){
-    config['pc'] = pcLocation;
-    config['ps4'] = ps4Location;
-    config['xb1'] = xb1Location;
-    var cipher = crypto.createCipher('aes-128-cbc', keyPass);
+    config.pc = pcLocation;
+    config.ps4 = ps4Location;
+    config.xb1 = xb1Location;
+    let cfg = JSON.stringify(config);
+    ipcRenderer.send( 'encrypt-data', {value: cfg} );
+    ipcRenderer.on('encrypted-data', (event, arg) =>{
+        jetpack.write(`${__dirname}/bin/loc.dat`, arg );
+        console.log('Location(s) Saved!');
+    });
 
-    var cryptConfig = cipher.update(JSON.stringify(config), 'utf8', 'hex');
-    cryptConfig += cipher.final('hex');
-    jetpack.write(`${__dirname}/bin/data.init`, cryptConfig);
 }
 function resetConfig(){
     pcLocation = '';
@@ -103,21 +104,39 @@ function resetConfig(){
 function LoadConfig(){
     try{
         console.log('Loading Save File!');
-        var decipher = crypto.createDecipher('aes-128-cbc', keyPass);
-        console.log('.');
-        var loadedConfig = jetpack.read(`${__dirname}/bin/data.init`);
-        console.log('.');
-        var decrpt = decipher.update(loadedConfig, 'hex', 'utf8');
-        console.log('.');
-        decrpt += decipher.final('utf8');
-        config = JSON.parse(decrpt);
-        console.log('Save Loaded!');
+        fs.readFile(`${__dirname}/bin/loc.dat`, (err, data) => {
+            ipcRenderer.send('decrypt-data', {value: data});
+            ipcRenderer.on('decrypted-data', (event, arg) => {
+                config = JSON.parse(arg);
+                console.log('Save Loaded!');
+            });
+        });
+
     }catch(err){
         throw new err;
     }
+}
+function configCheck(){
+    fs.readFile(`${__dirname}/bin/loc.dat`, (err, data) => {
+        if(err){
+            saveLocations();
+        }
+        else{
+            LoadConfig();
+        }
+    });
+    fs.readFile(`${__dirname}/bin/tw.dat`, (err, data) => {
+        if(err){
+            ipcenderer.send('clearTwitterAuth');
+        }
+        else{
+            ipcRenderer.send('get-twi-keys');
+        }
 
+    });
 }
 // On the initial load, we will load the user's data
 window.onload = function(){
-    LoadConfig();
+    //configCheck();
+
 }

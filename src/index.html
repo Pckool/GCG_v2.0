@@ -8,12 +8,14 @@
     <!-- STYLES -->
     <link rel="stylesheet" href="styles/main.css">
     <link rel="stylesheet" href="styles/settings.css">
+    <link rel="stylesheet" href="styles/extraStyles.css">
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.13/css/all.css" integrity="sha384-DNOHZ68U8hZfKXOrtjWvjxusGo9WQnrNx2sqG0tfsghAvtVlRW3tvkXWZh58N9jp" crossorigin="anonymous">
 
     <!-- SCRIPTS -->
     <script src="js/globalDependancies.js" charset="utf-8"></script>
     <script src="../node_modules/angular/angular.js"></script>
     <script src="../node_modules/angular-route/angular-route.js"></script>
+    <script src="../node_modules/angular-animate/angular-animate.js"></script>
     <script src="js/twitterInt.js"></script>
     <script src="js/renderer.js"></script>
 
@@ -21,7 +23,7 @@
 </head>
 <body>
     <div class="main-cont">
-        <ng-view></ng-view>
+        <ng-view class="toggle"></ng-view>
     </div>
 </body>
 
