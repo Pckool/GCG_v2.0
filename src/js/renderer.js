@@ -1,4 +1,4 @@
-const app = angular.module('gcg-app', ['ngRoute']);
+const app = angular.module('gcg-app', ['ngRoute', 'ngAnimate']);
 app.config(function($routeProvider){
     $routeProvider
     .when('/',{

@@ -1,20 +1,52 @@
-<div class="title-card">
-    <h1>Glyph Code Grabber</h1>
-</div>
+<div class="sub-cont toggle">
+    <div class="title-card">
+        <h1>Glyph Code Grabber</h1>
+    </div>
 
-<div class="main-card">
-    <div class="slidecontainer">
-        <div class="numText" id="numText">
-            {{sliderValue}}
+    <div class="main-card" id="main-card">
+        <div class="slidecontainer">
+            <div class="numText" id="numText">
+                {{sliderValue}}
+            </div>
+            <input ng-change="sliderUpdate($event)" ng-model="sliderValue" type="range" min="1" max="10" value="1" class="slider" id="numCodes" >
         </div>
-        <input ng-change="sliderUpdate($event)" ng-model="sliderValue" type="range" min="1" max="10" value="1" class="slider" id="numCodes">
+        <div class="grab-buttons">
+            <button class="btn-main btn-color-gold" id="grabPC" type="button" name="grabPC" ng-click="pcCodeGrab()">Grab PC Code(s)</button>
+            <button class="btn-main btn-color-gold" id="grabPS4" type="button" name="grabPS4" ng-click="ps4CodeGrab()">Grab PS4 Code(s)</button>
+            <button class="btn-main btn-color-gold" id="grabXB1" type="button" name="grabXB1" ng-click="xb1CodeGrab()">Grab XB1 Code(s)</button>
+        </div>
     </div>
-    <div class="grab-buttons">
-        <button class="btn-main" type="button" name="grabPC" ng-click="pcCodeGrab()">Grab PC Code(s)</button>
-        <button class="btn-main" type="button" name="grabPS4" ng-click="ps4CodeGrab()">Grab PS4 Code(s)</button>
-        <button class="btn-main" type="button" name="grabXB1" ng-click="xb1CodeGrab()">Grab XB1 Code(s)</button>
+    <div class="extras-card" id="extras-card">
+        <div class="twitter-column extra-column">
+            <div class="extra-title twitter-title">
+                <h3>TWITTER POST</h3>
+            </div>
+            <div class="check-cont">
+                <input ng-change="updateNumLoc($event)" ng-model="twitAmtValue1" class="twitter-checkbox checkbox checkbox-color" type="checkbox" id="twitPostPCCode" name="postPCCode" value="postPCCode"> POST PC CODES</input>
+            </div>
+            <div class="check-cont">
+                <input ng-change="updateNumLoc($event)" ng-model="twitAmtValue2" class="twitter-checkbox checkbox checkbox-color" type="checkbox" id="twitPostPS4Code" name="postPS4Code" value="postPS4Code"> POST PS4 CODES</input>
+            </div>
+            <div class="check-cont">
+                <input ng-change="updateNumLoc($event)" ng-model="twitAmtValue3" class="twitter-checkbox checkbox checkbox-color" type="checkbox" id="twitPostXB1Code" name="postXB1Code" value="postXB1Code"> POST XBOX ONE</input>
+            </div>
+            <button class="btn-main2 btn-color-blue" id="twitPostCodes" type="button" name="HelloWorld" ng-click="postCodes()">Post {{sliderValue * twitterMultiplier}} code(s)</button>
+        </div>
+        <!-- <div class="discord-column extra-column">
+
+        </div>
+        <div class="twitch-column extra-column">
+
+        </div> -->
     </div>
-    <div class="bottom-bar">
-        <a class="icon-links" href="#!settings"><i class="gearIcon fas fa-cog fa-2x"></i></a>
+
+
+    <div class="bottom-bar" id="bottom-bar">
+        <a class="icon-links" href="#!settings">
+            <div class="tooltip">
+                <span class="tooltiptext">Set up your connections and your code locations</span>
+                <i class="gearIcon hover-spin fas fa-cog fa-lg"></i>
+            </div>
+        </a>
     </div>
 </div>

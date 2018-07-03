@@ -1,17 +1,25 @@
-<div class="settings-card">
-    <a class="x-icon" href="#/!"><i class="fas fa-times-circle fa-2x"></i></a>
-    <div class="flexRow pc-box">
-        <input id="pc-input" class="input-box" type="text" name="pcLocation" value="" ng-model="pcLocation" disabled>
-        <button class="btn-main settings-btn" type="button" name="pcBrowse" ng-click="showPcFileManager()">PC Codes Location</button>
+<div class="sub-cont toggle">
+    <div class="top-bar" id="top-bar">
+        <a class="" href="#/!"><i class="x-icon far fa-times-circle fa-lg"></i></a>
     </div>
-    <div class="flexRow ps4-box">
-        <input id="ps4-input" class="input-box" type="text" name="ps4Location" value="" ng-model="ps4Location" disabled>
-        <button class="btn-main settings-btn" type="button" name="ps4Browse" ng-click="showPs4FileManager()">PS4 Codes Location</button>
+
+    <div class="main-card" id="main-card">
+        <div class="flexRow pc-box">
+            <input id="pc-input" class="input-box" type="text" name="pcLocation" value="" ng-model="pcLocation" disabled>
+            <button class="btn-main settings-btn btn-color-gold" type="button" name="pcBrowse" ng-click="showPcFileManager()">PC Codes Location</button>
+        </div>
+        <div class="flexRow ps4-box">
+            <input id="ps4-input" class="input-box" type="text" name="ps4Location" value="" ng-model="ps4Location" disabled>
+            <button class="btn-main settings-btn btn-color-gold" type="button" name="ps4Browse" ng-click="showPs4FileManager()">PS4 Codes Location</button>
+        </div>
+        <div class="flexRow xb1-box">
+            <input id="xb1-input" class="input-box" type="text" name="xb1Location" value="" ng-model="xb1Location" disabled>
+            <button class="btn-main settings-btn btn-color-gold" type="button" name="xb1Browse" ng-click="showXb1FileManager()">XB1 Codes Location</button>
+        </div>
+        <a href="#/!" class="button-lnks"><button class="btn-main settings-btn btn-color-gold" type="button" name="Save" onclick="saveLocations()">Save</button></a>
+        <a href="#/!" class="button-lnks"><button class="btn-main settings-btn btn-color-red" type="button" name="Reset" onclick="resetConfig()">Reset</button></a>
     </div>
-    <div class="flexRow xb1-box">
-        <input id="xb1-input" class="input-box" type="text" name="xb1Location" value="" ng-model="xb1Location" disabled>
-        <button class="btn-main settings-btn" type="button" name="xb1Browse" ng-click="showXb1FileManager()">XB1 Codes Location</button>
+    <div class="connections-card">
+        <a href="" class="button-lnks"><button class="btn-main settings-btn btn-color-blue" type="button" name="Reset" onclick="twitterOauth()">Connect Twitter</button></a>
     </div>
-    <a href="#/!" class="button-lnks"><button class="btn-main settings-btn" type="button" name="Save" onclick="saveLocations()">Save</button></a>
-    <a href="#/!" class="button-lnks"><button class="btn-main settings-btn" type="button" name="Reset" onclick="resetConfig()">Reset</button></a>
 </div>
