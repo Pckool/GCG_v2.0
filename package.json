@@ -37,8 +37,8 @@
             "electronInstallerDebian": {},
             "electronInstallerRedhat": {},
             "github_repository": {
-                "owner": "pckool",
-                "name": ""
+                "owner": "Pckool",
+                "name": "GCG_v2.0-Public"
             },
             "windowsStoreConfig": {
                 "packageName": "",
