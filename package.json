@@ -32,7 +32,8 @@
                 "packageManager": "npm"
             },
             "electronWinstallerConfig": {
-                "name": "gcg"
+                "name": "gcg",
+                "setupIcon": "./src/media/logo/gcg_icon.ico"
             },
             "electronInstallerDebian": {},
             "electronInstallerRedhat": {},
