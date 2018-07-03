@@ -49,7 +49,7 @@ const createWindow = () => {
 	mainWindow.loadURL(`file://${__dirname}/index.html`);
 
 	// Open the DevTools.
-	mainWindow.webContents.openDevTools();
+	// mainWindow.webContents.openDevTools();
 
 	// Emitted when the window is closed.
 	mainWindow.on('closed', () => {
@@ -270,7 +270,6 @@ ipcMain.on('load-page', (event, arg) => {
         autoHideMenuBar: true,
         alwaysOnTop: true
     });
-    // child.loadURL('https://twitter.com/oauth/authenticate?oauth_token=' + arg);
     child.once('ready-to-show', () => {
         mainWindow.setEnabled(false);
         child.show();

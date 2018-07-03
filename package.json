@@ -37,7 +37,7 @@
             "electronInstallerDebian": {},
             "electronInstallerRedhat": {},
             "github_repository": {
-                "owner": "",
+                "owner": "pckool",
                 "name": ""
             },
             "windowsStoreConfig": {
