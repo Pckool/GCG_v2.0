@@ -5,7 +5,7 @@ var pcLocation = '';
 var ps4Location = '';
 var xb1Location = '';
 const keyPass = 'WarframeFanChannels';
-var config = {
+config = {
     pc: '',
     ps4: '',
     xb1: ''
@@ -85,6 +85,7 @@ function saveLocations(){
     config.ps4 = ps4Location;
     config.xb1 = xb1Location;
     let cfg = JSON.stringify(config);
+    ipcRenderer.send('set-config', cfg);
     ipcRenderer.send( 'encrypt-data', {value: cfg} );
     ipcRenderer.on('encrypted-data', (event, arg) =>{
         jetpack.write(`${__dirname}/bin/loc.dat`, arg );
@@ -136,7 +137,21 @@ function configCheck(){
     });
 }
 // On the initial load, we will load the user's data
-window.onload = function(){
+$(document).ready(function(){
+    fs.readFile(`${__dirname}/bin/loc.dat`, (err, data) => {
+        if(err) throw err;
+        ipcRenderer.send('decrypt-data', {value:data});
+        ipcRenderer.on('decrypted-data', (event, arg) => {
+            let dat = JSON.parse(arg);
+            pcLocation = dat.pc;
+            ps4Location = dat.ps4;
+            xb1Location = dat.xb1;
+
+            saveLocations();
+            ipcRenderer.send('set-config', arg);
+        });
+    });
+
     //configCheck();
 
-}
+});

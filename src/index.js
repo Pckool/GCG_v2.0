@@ -1,6 +1,6 @@
 import { app, autoUpdater, BrowserWindow, ipcMain, dialog } from 'electron';
 require('electron-debug')();
-require('electron-reload')(__dirname);
+//require('electron-reload')(__dirname);
 var http = require('http');
 var fs = require('fs');
 var url = require('url');
@@ -13,7 +13,14 @@ const cryptoJS = require('crypto-js');             // For cyphers
 
 var T;                                             // The Twitter Bot
 var twitDataLoc = `${__dirname}/bin/tw.dat`;       // Directory of the twitter data file
+var initDataLoc = `${__dirname}/bin/init.dat`;       // Directory of the twitter data file
 const keyPass = 'WarframeFanChannels';             // Password for encryption
+
+var config = {
+    pc: '',
+    ps4: '',
+    xb1: ''
+}
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (require('electron-squirrel-startup')) { // eslint-disable-line global-require
@@ -31,8 +38,11 @@ const createWindow = () => {
 		width: 600,
 		height: 800,
         minWidth: 350,
+        maxWidth: 1020,
 		backgroundColor: '#3B414F',
+        frame: true,
         autoHideMenuBar: true,
+        icon: path.join(__dirname, '/media/logo/gcg_icon.ico'),
 	});
 
 	// and load the index.html of the app.
@@ -52,29 +62,34 @@ const createWindow = () => {
     // Twitter data json init
     fs.access(twitDataLoc, fs.constants.F_OK, (err) => {
         if(err){
-            var twitData = {
-                consumer_key:     '0IxvGU3ZW5ui4WOOSns1aBCYf',
-                consumer_secret:  'T2YUYViTBCUPWkmtVBLSvm15BTF6H4Pd9gvvr4PihSuJKV88Ub',
-                request_token:    '',
-                request_secret:   '',
-                verifier:         '',
-                access_token:     '',
-                access_secret:    ''
-            }
-            var dat = JSON.stringify(twitData);
-            let dec = encryptData(0, {value: dat});
-            fs.writeFile(twitDataLoc, dec, (err) => {
-                if (err) {
-                    console.log(err);
-                    fs.unlink(twitDataLoc, (err) => {
-                        if(err) throw err;
-                        console.log('Removed the file I just tried to make.');
-                    });
-                    throw err;
+            fs.readFile(initDataLoc, (err, data) => {
+                var text = decryptData(0, {value: data});
+                var jsn = JSON.parse(text);
+                var twitData = {
+                    consumer_key:     jsn.consumer_key,
+                    consumer_secret:  jsn.consumer_secret,
+                    request_token:    '',
+                    request_secret:   '',
+                    verifier:         '',
+                    access_token:     '',
+                    access_secret:    ''
                 }
-                console.log('Made the new file')
+                var dat = JSON.stringify(twitData);
+                let dec = encryptData(0, {value: dat});
+                fs.writeFile(twitDataLoc, dec, (err) => {
+                    if (err) {
+                        console.log(err);
+                        fs.unlink(twitDataLoc, (err) => {
+                            if(err) throw err;
+                            console.log('Removed the file I just tried to make.');
+                        });
+                        throw err;
+                    }
+                    console.log('Made the new file')
+                });
+                return;
             });
-            return;
+
         }
         console.log('Twitter Data file found! Loading now...');
 
@@ -91,8 +106,6 @@ const createWindow = () => {
 
         });
     });
-
-
 };
 
 // This method will be called when Electron has finished
@@ -312,23 +325,26 @@ function twitVerify(event){
 ipcMain.on('verify-twit-auth', twitVerify);
 
 function clearTwitterData(event){
-    var twitData = {
-        consumer_key:     '0IxvGU3ZW5ui4WOOSns1aBCYf',
-        consumer_secret:  'T2YUYViTBCUPWkmtVBLSvm15BTF6H4Pd9gvvr4PihSuJKV88Ub',
-        request_token:    '',
-        request_secret:   '',
-        verifier:         '',
-        access_token:     '',
-        access_secret:    ''
-    }
-    dat = JSON.stringify(dat);
-    let dec = encryptData(0, {value: dat});
-    fs.writeFile(twitDataLoc, dec, (err) => {
-        if (err) {
-            console.log(err);
-            throw err;
+    fs.readFile(initDataLoc, (err, data) => {
+        var jsn = JSON.parse(decryptData(0, {value: data}));
+        var twitData = {
+            consumer_key:     jsn.consumer_key,
+            consumer_secret:  jsn.consumer_secret,
+            request_token:    '',
+            request_secret:   '',
+            verifier:         '',
+            access_token:     '',
+            access_secret:    ''
         }
-        console.log('Twitter Data Reset')
+        let dat = JSON.stringify(twitData);
+        let dec = encryptData(0, {value: dat});
+        fs.writeFile(twitDataLoc, dec, (err) => {
+            if (err) {
+                console.log(err);
+                throw err;
+            }
+            console.log('Twitter Data Reset')
+        });
     });
 }
 ipcMain.on('clearTwitterAuth', clearTwitterData);
@@ -372,3 +388,13 @@ function twitterPost(event, postStatus){
     });
 }
 ipcMain.on('twitter-post', twitterPost);
+
+//LOCATION INTERRACTIONS
+ipcMain.on('get-config', (event, arg) => {
+    let cfg = JSON.stringify(config);
+    event.sender.send('send-config', cfg);
+});
+
+ipcMain.on('set-config', (event, arg) => {
+    let config = JSON.parse(arg);
+});

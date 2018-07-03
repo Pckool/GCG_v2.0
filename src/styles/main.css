@@ -50,35 +50,47 @@ input[type=text]{
     align-items: center;
     align-content: center;
     margin: 0 1em;
+    transition-duration: 0.2s;
 }
-input[type=checkbox] {
+.checkbox {
 	-webkit-appearance: none;
-	background-color: #f3f3f3;
 	padding: 9px;
-    border: 2px solid #14171A;
+    border: 2px solid;
 	display: inline-block;
 	position: relative;
     outline: none;
     transition-duration: 0.2s;
+    -webkit-transition-duration: 0.2s;
     margin-right: 0.9em;
+}
+.checkbox-color{
+    background-color: rgba(#f4f4f4, 0);
+    border-color: #14171A;
+    cursor: pointer;
 }
 .main-checkbox:checked {
 	background-color: #e2bc48;
     border-color: #e2bc48;
 	color: #f3f3f3;
+    transition-duration: 0.2s;
+    -webkit-transition-duration: 0.2s;
 }
 .twitter-checkbox:checked{
     background-color: #1DA1F2;
     border-color: #1DA1F2;
     color: #f3f3f3;
+    transition-duration: 0.2s;
+    -webkit-transition-duration: 0.2s;
 }
-input[type=checkbox]:checked:after {
+.checkbox:checked:after {
 	content: '\2714';
 	font-size: 14px;
 	position: absolute;
 	top: 0px;
 	left: 3px;
 	color: #f3f3f3;
+    transition-duration: 0.2s;
+    -webkit-transition-duration: 0.2s;
 }
 
 .title-card{
