@@ -113,10 +113,6 @@ app.controller('homeController', function($scope){
             $('#twitPostCodes').toggleClass('btn-color-blue', true);
             $('#twitPostCodes').toggleClass('btn-disabled', false);
             checkCheckBoxes();
-
-            // $('#twitPostPCCode').prop('disabled', false);
-            // $('#twitPostPS4Code').prop('disabled', false);
-            // $('#twitPostXB1Code').prop('disabled', false);
         }
         else{
             $('#twitPostCodes').prop("disabled", true);
@@ -330,5 +326,4 @@ function checkCheckBoxes(){
 
 $(document).ready( () => {
         console.log('DOM ready!');
-        //checkLocations();
     });
