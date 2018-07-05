@@ -1,6 +1,6 @@
 {
-    "name": "gcg",
-    "productName": "gcg",
+    "name": "GCG",
+    "productName": "GCG",
     "version": "2.0.0",
     "description": "An application for warframe partners.",
     "main": "src/index.js",
@@ -29,14 +29,17 @@
                 ]
             },
             "electronPackagerConfig": {
-                "packageManager": "npm"
+                "packageManager": "npm",
+                "icon": "./src/media/logo/gcg_icon_.ico"
             },
             "electronWinstallerConfig": {
-                "name": "GCG 2",
+                "name": "GCG2",
                 "owner": "TDefton",
                 "title": "GCG 2",
-                "setupIcon": "./src/media/logo/gcg_icon_wire.ico",
-                "loadingGif": "./src/media/GCG-Icon-Loading.gif"
+                "setupIcon": "./src/media/logo/gcg_icon_.ico",
+                "loadingGif": "./src/media/GCG-Loading.gif",
+                "certificateFile": "./cert.pfx",
+                "certificatePassword": "TDefton"
             },
             "electronInstallerDebian": {},
             "electronInstallerRedhat": {},
@@ -46,7 +49,7 @@
             },
             "windowsStoreConfig": {
                 "packageName": "",
-                "name": "gcg"
+                "name": "GCG2"
             }
         }
     },
