@@ -42,7 +42,7 @@ const createWindow = () => {
 		backgroundColor: '#3B414F',
         frame: true,
         autoHideMenuBar: true,
-        icon: path.join(__dirname, '/media/logo/gcg_icon.ico'),
+        icon: path.join(__dirname, '/media/logo/gcg_icon_.ico'),
 	});
 
 	// and load the index.html of the app.
