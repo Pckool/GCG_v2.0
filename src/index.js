@@ -136,8 +136,8 @@ app.on('activate', () => {
 // For Updating ----------------------------------------------------------------
 require('update-electron-app')({
     repo: 'Pckool/GCG_v2.0-Public',
-  updateInterval: '10 minutes',
-  logger: require('electron-log')
+    updateInterval: '5 minutes',
+    logger: require('electron-log')
 })
 
 // Electron is dev

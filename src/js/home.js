@@ -7,7 +7,8 @@ app.controller('homeController', function($scope){
     // INIT FUNCTIONS
     correctContSize();
     document.onresize = correctContSize;
-    checkLocations();
+    postCodesCheck();
+    checkLocations_mainButtons();
 
     $('.twitter-checkbox').each( (i, el) => {
         $(el).on('click', (event) => {
@@ -106,24 +107,7 @@ app.controller('homeController', function($scope){
     });
     $scope.updateNumLoc = updateNumLoc;
 
-    ipcRenderer.on('twit-authed', function(event, authed){
-
-        if(authed === true){
-            $('#twitPostCodes').prop("disabled", false);
-            $('#twitPostCodes').toggleClass('btn-color-blue', true);
-            $('#twitPostCodes').toggleClass('btn-disabled', false);
-            checkCheckBoxes();
-        }
-        else{
-            $('#twitPostCodes').prop("disabled", true);
-            $('#twitPostCodes').toggleClass('btn-color-blue', false);
-            $('#twitPostCodes').toggleClass('btn-disabled', true);
-
-            $('#twitPostPCCode').prop('disabled', true);
-            $('#twitPostPS4Code').prop('disabled', true);
-            $('#twitPostXB1Code').prop('disabled', true);
-        }
-    });
+    ipcRenderer.on('twit-authed', postCodesCheck);
 
     function pcCodeGrab(callback){
         console.log('pc: ' + config.pc);
@@ -233,8 +217,37 @@ app.controller('homeController', function($scope){
 
 });
 
-function checkLocations(){
-    let config;
+function postCodesCheck(event, authed){
+
+    if(authed === true){
+        console.log('twitter is authorized');
+        $('#twitPostCodes').prop("disabled", false);
+        $('#twitPostCodes').toggleClass('btn-color-blue', true);
+        $('#twitPostCodes').toggleClass('btn-disabled', false);
+        checkLocations_checkboxes();
+        checkCheckBoxes();
+    }
+    else{
+        console.log('twitter is not authorized');
+        $('#twitPostCodes').prop("disabled", true);
+        $('#twitPostCodes').toggleClass('btn-color-blue', false);
+        $('#twitPostCodes').toggleClass('btn-disabled', true);
+
+        $('#twitPostPCCode').prop('disabled', true);
+        $('#twitPostPCCode').toggleClass('checkbox-color', false);
+        $('#twitPostPCCode').toggleClass('btn-disabled', true);
+
+        $('#twitPostPS4Code').prop('disabled', true);
+        $('#twitPostPS4Code').toggleClass('checkbox-color', false);
+        $('#twitPostPS4Code').toggleClass('btn-disabled', true);
+
+        $('#twitPostXB1Code').prop('disabled', true);
+        $('#twitPostXB1Code').toggleClass('checkbox-color', false);
+        $('#twitPostXB1Code').toggleClass('btn-disabled', true);
+    }
+}
+
+function checkLocations_mainButtons(){
     fs.readFile(`${__dirname}/bin/loc.dat`, (err, data) => {
         ipcRenderer.send('decrypt-data', {value: data});
         ipcRenderer.on('decrypted-data', (event, arg) =>{
@@ -245,16 +258,52 @@ function checkLocations(){
                 $('#grabPC').prop('disabled', false);
                 $('#grabPC').toggleClass('btn-color-gold', true);
                 $('#grabPC').toggleClass('btn-disabled', false);
-
-                $('#twitPostPCCode').prop('disabled', false);
-                $('#twitPostPCCode').toggleClass('checkbox-color', true);
-                $('#twitPostPCCode').toggleClass('btn-disabled', false);
             }
             else{
                 $('#grabPC').prop('disabled', true);
                 $('#grabPC').toggleClass('btn-color-gold', false);
                 $('#grabPC').toggleClass('btn-disabled', true);
+            }
+            if(config.ps4 !== ''){
+                // ps4 codes location is available
+                $('#grabPS4').prop('disabled', false);
+                $('#grabPS4').toggleClass('btn-color-gold', true);
+                $('#grabPS4').toggleClass('btn-disabled', false);
+            }
+            else{
+                $('#grabPS4').prop('disabled', true);
+                $('#grabPS4').toggleClass('btn-color-gold', false);
+                $('#grabPS4').toggleClass('btn-disabled', true);
+            }
+            if(config.xb1 !== ''){
+                // xb1 codes location is available
+                $('#grabXB1').prop('disabled', false);
+                $('#grabXB1').toggleClass('btn-color-gold', true);
+                $('#grabXB1').toggleClass('btn-disabled', false);
+            }
+            else{
+                $('#grabXB1').prop('disabled', true);
+                $('#grabXB1').toggleClass('btn-color-gold', false);
+                $('#grabXB1').toggleClass('btn-disabled', true);
+            }
 
+
+        });
+    });
+}
+function checkLocations_checkboxes(){
+    fs.readFile(`${__dirname}/bin/loc.dat`, (err, data) => {
+        ipcRenderer.send('decrypt-data', {value: data});
+        ipcRenderer.on('decrypted-data', (event, arg) =>{
+            config = JSON.parse(arg);
+            console.log(config);
+            if(config.pc !== ''){
+                // pc codes location is available
+                $('#twitPostPCCode').prop('disabled', false);
+                $('#twitPostPCCode').toggleClass('checkbox-color', true);
+                $('#twitPostPCCode').toggleClass('btn-disabled', false);
+            }
+            else{
                 console.log('trying to disable pc');
                 $('#twitPostPCCode').prop('disabled', true);
                 $('#twitPostPCCode').toggleClass('checkbox-color', false);
@@ -262,20 +311,11 @@ function checkLocations(){
             }
             if(config.ps4 !== ''){
                 // ps4 codes location is available
-                $('#grabPS4').prop('disabled', false);
-                $('#grabPS4').toggleClass('btn-color-gold', true);
-                $('#grabPS4').toggleClass('btn-disabled', false);
-
-
                 $('#twitPostPS4Code').prop('disabled', false);
                 $('#twitPostPS4Code').toggleClass('checkbox-color', true);
                 $('#twitPostPS4Code').toggleClass('btn-disabled', false);
             }
             else{
-                $('#grabPS4').prop('disabled', true);
-                $('#grabPS4').toggleClass('btn-color-gold', false);
-                $('#grabPS4').toggleClass('btn-disabled', true);
-
                 console.log('trying to disable ps4');
                 $('#twitPostPS4Code').prop('disabled', true);
                 $('#twitPostPS4Code').toggleClass('checkbox-color', false);
@@ -283,26 +323,16 @@ function checkLocations(){
             }
             if(config.xb1 !== ''){
                 // xb1 codes location is available
-                $('#grabXB1').prop('disabled', false);
-                $('#grabXB1').toggleClass('btn-color-gold', true);
-                $('#grabXB1').toggleClass('btn-disabled', false);
-
                 $('#twitPostXB1Code').prop('disabled', false);
                 $('#twitPostXB1Code').toggleClass('checkbox-color', true);
                 $('#twitPostXB1Code').toggleClass('btn-disabled', false);
             }
             else{
-                $('#grabXB1').prop('disabled', true);
-                $('#grabXB1').toggleClass('btn-color-gold', false);
-                $('#grabXB1').toggleClass('btn-disabled', true);
-
                 console.log('trying to disable xb1');
                 $('#twitPostXB1Code').prop('disabled', true);
                 $('#twitPostXB1Code').toggleClass('checkbox-color', false);
                 $('#twitPostXB1Code').toggleClass('btn-disabled', true);
             }
-
-
         });
     });
 }

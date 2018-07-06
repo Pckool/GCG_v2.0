@@ -37,8 +37,6 @@ app.controller('settingsController', function($scope){
             } catch (e) {
                 console.log('No file selected.');
             }
-
-            // This subfunction needs to have a try catch block
         });
     }
     $scope.showPs4FileManager = function(){
@@ -50,7 +48,7 @@ app.controller('settingsController', function($scope){
             }]
         },function(fileLocation){
             try{
-                pcLocation = fileLocation.toString();
+                ps4Location = fileLocation.toString();
                 console.log(ps4Location);
                 document.getElementById('ps4-input').value = pcLocation;
             } catch (e) {
@@ -68,7 +66,7 @@ app.controller('settingsController', function($scope){
             }]
         },function(fileLocation){
             try{
-                pcLocation = fileLocation.toString();
+                xb1Location = fileLocation.toString();
                 console.log(xb1Location);
                 document.getElementById('xb1-input').value = pcLocation;
             } catch (e) {
@@ -85,8 +83,8 @@ function saveLocations(){
     config.ps4 = ps4Location;
     config.xb1 = xb1Location;
     let cfg = JSON.stringify(config);
-    ipcRenderer.send('set-config', cfg);
-    ipcRenderer.send( 'encrypt-data', {value: cfg} );
+    ipcRenderer.send('set-config', cfg); // Setting the config variable for use right now
+    ipcRenderer.send( 'encrypt-data', {value: cfg} ); // setting the config file for later use
     ipcRenderer.on('encrypted-data', (event, arg) =>{
         jetpack.write(`${__dirname}/bin/loc.dat`, arg );
         console.log('Location(s) Saved!');
