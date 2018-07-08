@@ -133,6 +133,7 @@ app.controller('homeController', function($scope){
                 copy(codez);
                 jetpack.write(config.pc, newList.trim());
                 counter = 0;
+                notify('Code(s) Copied to clipboard!');
                 if(callback){
                     callback(codez);
                 }
@@ -168,6 +169,7 @@ app.controller('homeController', function($scope){
                 copy(codez);
                 jetpack.write(config.ps4, newList.trim());
                 counter = 0;
+                notify('Code(s) Copied to clipboard!');
                 if(callback){
                     callback(codez);
                 }
@@ -203,6 +205,7 @@ app.controller('homeController', function($scope){
                 copy(codez);
                 jetpack.write(config.xb1, newList.trim());
                 counter = 0;
+                notify('Code(s) Copied to clipboard!');
                 if(callback){
                     callback(codez);
                 }
@@ -291,6 +294,7 @@ function checkLocations_mainButtons(){
         });
     });
 }
+
 function checkLocations_checkboxes(){
     fs.readFile(`${__dirname}/bin/loc.dat`, (err, data) => {
         ipcRenderer.send('decrypt-data', {value: data});

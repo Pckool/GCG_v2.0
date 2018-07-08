@@ -31,18 +31,19 @@ if (require('electron-squirrel-startup')) { // eslint-disable-line global-requir
 // be closed automatically when the JavaScript object is garbage collected.
 let mainWindow;
 let child;
+let popup;
 
 const createWindow = () => {
 	// Create the browser window.
 	mainWindow = new BrowserWindow({
 		width: 600,
 		height: 800,
-        minWidth: 350,
-        maxWidth: 1020,
+		minWidth: 350,
+		maxWidth: 1020,
 		backgroundColor: '#3B414F',
-        frame: true,
-        autoHideMenuBar: true,
-        icon: path.join(__dirname, '/media/logo/gcg_icon_.ico'),
+		frame: true,
+		autoHideMenuBar: true,
+		icon: path.join(__dirname, '/media/logo/gcg_icon_.ico'),
 	});
 
 	// and load the index.html of the app.
@@ -59,53 +60,58 @@ const createWindow = () => {
 		mainWindow = null;
 	});
 
-    // Twitter data json init
-    fs.access(twitDataLoc, fs.constants.F_OK, (err) => {
-        if(err){
-            fs.readFile(initDataLoc, (err, data) => {
-                var text = decryptData(0, {value: data});
-                var jsn = JSON.parse(text);
-                var twitData = {
-                    consumer_key:     jsn.consumer_key,
-                    consumer_secret:  jsn.consumer_secret,
-                    request_token:    '',
-                    request_secret:   '',
-                    verifier:         '',
-                    access_token:     '',
-                    access_secret:    ''
-                }
-                var dat = JSON.stringify(twitData);
-                let dec = encryptData(0, {value: dat});
-                fs.writeFile(twitDataLoc, dec, (err) => {
-                    if (err) {
-                        console.log(err);
-                        fs.unlink(twitDataLoc, (err) => {
-                            if(err) throw err;
-                            console.log('Removed the file I just tried to make.');
-                        });
-                        throw err;
-                    }
-                    console.log('Made the new file')
-                });
-                return;
-            });
+	// Twitter data json init
+	fs.access(twitDataLoc, fs.constants.F_OK, (err) => {
+		if (err) {
+			fs.readFile(initDataLoc, (err, data) => {
+				var text = decryptData(0, {
+					value: data
+				});
+				var jsn = JSON.parse(text);
+				var twitData = {
+					consumer_key: jsn.consumer_key,
+					consumer_secret: jsn.consumer_secret,
+					request_token: '',
+					request_secret: '',
+					verifier: '',
+					access_token: '',
+					access_secret: ''
+				}
+				var dat = JSON.stringify(twitData);
+				let dec = encryptData(0, {
+					value: dat
+				});
+				fs.writeFile(twitDataLoc, dec, (err) => {
+					if (err) {
+						console.log(err);
+						fs.unlink(twitDataLoc, (err) => {
+							if (err) throw err;
+							console.log('Removed the file I just tried to make.');
+						});
+						throw err;
+					}
+					console.log('Made the new file')
+				});
+				return;
+			});
 
-        }
-        console.log('Twitter Data file found! Loading now...');
+		}
+		console.log('Twitter Data file found! Loading now...');
 
-        fs.readFile(twitDataLoc, (err, data) => {
-            if(err){
-                throw err;
-            }
-            else{
-                let dat = JSON.parse(decryptData(0, {value: data}));
-                if(dat.access_token && dat.access_secret){
-                    connectTwitter();
-                }
-            }
+		fs.readFile(twitDataLoc, (err, data) => {
+			if (err) {
+				throw err;
+			} else {
+				let dat = JSON.parse(decryptData(0, {
+					value: data
+				}));
+				if (dat.access_token && dat.access_secret) {
+					connectTwitter();
+				}
+			}
 
-        });
-    });
+		});
+	});
 };
 
 // This method will be called when Electron has finished
@@ -115,20 +121,43 @@ app.on('ready', createWindow);
 
 // Quit when all windows are closed.
 app.on('window-all-closed', () => {
-  // On OS X it is common for applications and their menu bar
-  // to stay active until the user quits explicitly with Cmd + Q
-  if (process.platform !== 'darwin') {
-    app.quit();
-  }
+	// On OS X it is common for applications and their menu bar
+	// to stay active until the user quits explicitly with Cmd + Q
+	if (process.platform !== 'darwin') {
+		app.quit();
+	}
 });
 
 app.on('activate', () => {
-  // On OS X it's common to re-create a window in the app when the
-  // dock icon is clicked and there are no other windows open.
-  if (mainWindow === null) {
-    createWindow();
-  }
+	// On OS X it's common to re-create a window in the app when the
+	// dock icon is clicked and there are no other windows open.
+	if (mainWindow === null) {
+		createWindow();
+	}
 });
+
+const createPopup = (filename) => {
+    popup = new BrowserWindow({
+        height: 200,
+        width: 400,
+        minHeight: 200,
+        minWidth: 400,
+        maxHeight: 200,
+        maxWidth: 400,
+        autoHideMenuBar: true,
+        backgroundColor: '#3B414F'
+    });
+
+    popup.on('closed', () => {
+		// Dereference the window object, usually you would store windows
+		// in an array if your app supports multi windows, this is the time
+		// when you should delete the corresponding element.
+		popup = null;
+	});
+    popup.on('ready', () => {
+
+    });
+}
 
 // In this file you can include the rest of your app's specific main process
 // code. You can also put them in separate files and import them here.

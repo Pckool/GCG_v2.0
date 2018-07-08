@@ -89,7 +89,7 @@ function saveLocations(){
         jetpack.write(`${__dirname}/bin/loc.dat`, arg );
         console.log('Location(s) Saved!');
     });
-
+    notify('Saved Data');
 }
 function resetConfig(){
     pcLocation = '';
@@ -99,6 +99,7 @@ function resetConfig(){
     ipcRenderer.send('clearTwitterAuth');
 
     ipcRenderer.send('verify-twit-auth');
+    // notify('Data Reset');
 }
 function LoadConfig(){
     try{
@@ -110,7 +111,6 @@ function LoadConfig(){
                 console.log('Save Loaded!');
             });
         });
-
     }catch(err){
         throw new err;
     }
