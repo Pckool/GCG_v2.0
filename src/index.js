@@ -167,7 +167,7 @@ require('update-electron-app')({
     repo: 'Pckool/GCG_v2.0-Public',
     updateInterval: '5 minutes',
     logger: require('electron-log')
-})
+});
 
 // Electron is dev
 const isDev = require('electron-is-dev');
