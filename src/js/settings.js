@@ -95,7 +95,7 @@ function resetConfig(){
     pcLocation = '';
     ps4Location = '';
     xb1Location = '';
-    saveLocations();
+    saveLocations(); //#################################################
     ipcRenderer.send('clearTwitterAuth');
 
     ipcRenderer.send('verify-twit-auth');
@@ -118,7 +118,7 @@ function LoadConfig(){
 function configCheck(){
     fs.readFile(`${__dirname}/bin/loc.dat`, (err, data) => {
         if(err){
-            saveLocations();
+            saveLocations(); //#################################################
         }
         else{
             LoadConfig();
@@ -145,7 +145,7 @@ $(document).ready(function(){
             ps4Location = dat.ps4;
             xb1Location = dat.xb1;
 
-            saveLocations();
+            saveLocations(); //#################################################
             ipcRenderer.send('set-config', arg);
         });
     });
