@@ -19,3 +19,6 @@
     flex-flow: column;
     text-decoration: none;
 }
+.donateButton{
+    height: 15px;
+}
