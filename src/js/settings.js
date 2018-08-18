@@ -9,16 +9,15 @@ config = {
     pc: '',
     ps4: '',
     xb1: ''
-}
+};
 app.controller('settingsController', function($scope){
-    correctContSize();
     document.onresize = correctContSize;
     configCheck();
 
     $scope.populateBoxes = function($scope){
-        $scope.pcLocation = config.pc;
-        $scope.ps4Location = config.ps4;
-        $scope.xb1Location = config.xb1;
+        $('#pc-input').text(config.pc);
+        $('#ps4-input').text(config.ps4);
+        $('#xb1-input').text(config.xb1);
     }
     $scope.populateBoxes($scope);
 
@@ -33,7 +32,7 @@ app.controller('settingsController', function($scope){
             try {
                 pcLocation = fileLocation.toString();
                 console.log(pcLocation);
-                document.getElementById('pc-input').value = pcLocation;
+                $('#pc-Location').text(pcLocation);
             } catch (e) {
                 console.log('No file selected.');
             }
@@ -50,7 +49,7 @@ app.controller('settingsController', function($scope){
             try{
                 ps4Location = fileLocation.toString();
                 console.log(ps4Location);
-                document.getElementById('ps4-input').value = pcLocation;
+                $('#ps4-Location').text(ps4Location);
             } catch (e) {
                 console.log('No file selected.');
             }
@@ -68,14 +67,15 @@ app.controller('settingsController', function($scope){
             try{
                 xb1Location = fileLocation.toString();
                 console.log(xb1Location);
-                document.getElementById('xb1-input').value = pcLocation;
+                $('#xb1-Location').text(xb1Location);
             } catch (e) {
                 console.log('No file selected.');
             }
 
         });
     }
-    // For Twitter Integration
+    correctContSize();
+
 });
 
 function saveLocations(){
@@ -97,6 +97,7 @@ function resetConfig(){
     xb1Location = '';
     saveLocations(); //#################################################
     ipcRenderer.send('clearTwitterAuth');
+    resetDiscordConfig();
 
     ipcRenderer.send('verify-twit-auth');
     notify('Data Reset');

@@ -1,0 +1,50 @@
+<div class="sub-cont toggle">
+    <div class="top-bar" id="top-bar">
+        <a class="back-icon far fa-arrow-alt-circle-left fa-lg" href="#!settings"></a>
+        <a class="x-icon far fa-times-circle fa-lg" href="#/!"></a>
+    </div>
+
+    <div class="main-card">
+        <div class="discord-options">
+            <div class="margin-lr-1em margin-tb-1em">
+                <a class="regular-link" href="http://localhost:8888/open_browser/discord/wurl?hurl__=https%3A%2F%2Fdiscordapp.com%2Fdevelopers%2Fapplications" target="_blank">Create your Discord bot!</a>
+            </div>
+            <form class="" target="_blank" method="GET">
+                <div class="flexColumn">
+                    <label for="client_id">Client ID*</label>
+                    <input type="password" id="client_id" class="input-box" name="client_id" value="" ng-model="client_id" ng-change="client_id_in()" required/>
+                </div>
+
+                <input type="hidden" name="permissions" value="8"/>
+                <input type="hidden" name="scope" value="bot connections"/>
+
+                 <input type="submit" id="server_connect" class="btn-main" value="Connect to a Server"/>
+            </form>
+            <div class="flexColumn">
+                <label for="token">Token*</label>
+                <input type="password" id="token" name="token" class="input-box" ng-model="discordToken" ng-change="token_in()"/>
+            </div>
+
+            <div class="flexRow">
+                <div class="flexColumn flex-grow1">
+                    <label for="SubRole">Sub Role</label>
+                    <!-- <input type="text" class="input-box" id="sub_role" name="sub_role" value="" ng-model="discordSubRole"/> -->
+                    <select id="sub_role" class="" name="sub_role" ng-model="discordSubRole">
+
+                    </select>
+                </div>
+                <div class="flexColumn flex-grow1">
+                    <label for="SubRole">Time as Sub</label>
+                    <input type="number" class="input-box" id="time_as_sub" name="time_as_sub" value="0" ng-model="timeAsSub"/>
+                </div>
+            </div>
+
+            <div class="flexRow">
+                <button id="dis-connect" class="btn-main btn-color-green flex-grow1" name="discord-connect" ng-click="discord_connect()">Connect</button>
+                <button id="dis-disconnect" class="btn-main btn-color-red flex-grow1" name="discord-disconnect" ng-click="discord_disconnect()">Disconnect</button>
+            </div>
+
+
+        </div>
+    </div>
+</div>

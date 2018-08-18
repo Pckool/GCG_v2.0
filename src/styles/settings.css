@@ -9,15 +9,13 @@
     background-color: rgba(0,0,0,0.0);
     transition-duration: 0.3s;
     outline: none;
+    border-radius: 0.3em;
 }
-.settings-btn{
-    flex-grow: 1;
-
-}
-.button-lnks{
+.button-links{
     display: flex;
     flex-flow: column;
     text-decoration: none;
+    flex-grow: 1;
 }
 .donateButton{
     height: 15px;

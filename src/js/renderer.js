@@ -9,8 +9,12 @@ app.config(function($routeProvider){
         templateUrl: 'settings.html',
         controller: 'settingsController'
     })
+    .when('/settings/discord', {
+        templateUrl: 'discord.html',
+        controller: 'discordSettingsController'
+    })
     .otherwise({
-        template: '<h2>You have broken the app and went somewhere you weren\'t supposed to!</h2>' +
-        '<p>Please restart or click the button below.</p> <button href="#/!">Go to Home</button>'
+        template: '<div><h2>You have broken the app and went somewhere you weren\'t supposed to!</h2></div>' +
+        '<div><p>Please restart or click the button below.</p> <button href="#/!">Go to Home</button></div>'
     });
 });

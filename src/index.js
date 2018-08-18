@@ -6,6 +6,7 @@ var fs = require('fs');
 var url = require('url');
 var mime = require('mime');
 var path = require('path');
+var bLauncher = require('launch-browser');        // Launch-Browser
 var queryString = require('query-string');         // An easy way to parse URL queries
 const twitterAPI = require('node-twitter-api');    // Twitter Authenticator
 var twit = require('twit');                        // Twitter Interface
@@ -14,6 +15,7 @@ const cryptoJS = require('crypto-js');             // For cyphers
 var T;                                             // The Twitter Bot
 var twitDataLoc = `${__dirname}/bin/tw.dat`;       // Directory of the twitter data file
 var initDataLoc = `${__dirname}/bin/init.dat`;       // Directory of the twitter data file
+var disDataLoc = `${__dirname}/bin/dis.dat`;
 const keyPass = 'WarframeFanChannels';             // Password for encryption
 
 var config = {
@@ -179,40 +181,114 @@ if (isDev) {
 	console.log('Running in production');
 }
 
-// Localized Server ------------------------------------------------------------
+// Localized Server ------------------------------------------------------------ Localized Server
 function handleRequest(req, res) {
-    let query = req.url.substr(1);
-    var tokens = queryString.parse(query);
-    if(tokens.oauth_token){
-        fs.readFile(twitDataLoc, (err, data) => {
-            if(err) throw err;
-            let dat = JSON.parse(decryptData(0, {value: data}));
-            dat.verifier = tokens.oauth_verifier;
-            dat = JSON.stringify(dat)
-            let dec = encryptData(0, {value: dat});
-            fs.writeFile(twitDataLoc, dec, (err) => {
-                if(err) throw err;
-                console.log('Saved Twitter Data... Proceeding to final step.');
-                getAccessTokens();
+    let indexOfQuery = 0;
+    if(req.url.includes('?')){
+        indexOfQuery = req.url.indexOf('?');
+    }
+
+    if(req.url.includes('/wurl')){
+        let query = queryString.parse(req.url.substr(indexOfQuery));
+        bLauncher(query.hurl__, {browser: ["chrome", "firefox"]}, function(e, browser){
+            if(e){
+                return console.log(e);
+            }
+            browser.on('stop', function(code){
+
+            console.log( 'Browser closed with exit code:', code );
+
             });
         });
     }
 
-    var file = path.join(app.getAppPath(), req.url);
-	fs.exists(file, function(exists) {
-		if (exists && fs.lstatSync(file).isFile()) {
+    // if the request if for discord auth
+    if(req.url.includes('/discord') ){
+        // This is for a request to open a new browser!
+        if(req.url.includes('/open_browser') && indexOfQuery >= 0){
+            if(!req.url.includes('/wurl')){
+                console.log('Got a request to open a browser with this query: ' + req.url.substr(indexOfQuery) );
+                bLauncher('http://discordapp.com/api/oauth2/authorize'+ req.url.substr(indexOfQuery), {browser: ["chrome", "firefox"]}, (e, browser) => {
+                    if(e) return console.log(e);
+                    browser.on('stop', function(code){
+                        console.log( 'Browser closed with exit code:', code );
+                    });
+                });
+            }
+            else{
 
-			res.setHeader("Content-Type", mime.lookup(file));
-			res.writeHead(200, {
-				'Access-Control-Allow-Origin': '*'
-			});
-			fs.createReadStream(file).pipe(res);
-			return;
-		}
-		res.writeHead(404);
-		res.write('Verifying, Please Wait...');
-		res.end();
-	});
+            }
+
+        }
+
+        if(req.url.includes('/success_') ){
+            console.log('query: ' + req.url.substr(indexOfQuery));
+            res.send(req.data);
+            res.end();
+        }
+        else if(req.url.includes('/failure_')){
+            console.log('query: ' + req.url.substr(indexOfQuery));
+        }
+    }
+    // if the request id for twitter auth
+    else if(req.url.includes('/twitter') ){
+        // This is for a request to open a new browser!
+        if(req.url.includes('/open_browser') && indexOfQuery >= 0){
+            console.log('Got a request to open a browser with this query: ' + req.url.substr(indexOfQuery) );
+        }
+
+    }
+    // if the request is for twitch
+    else if(req.url.includes('/twitch')){
+        // This is for a request to open a new browser!
+        if(req.url.includes('/open_browser') && indexOfQuery >= 0){
+            console.log('Got a request to open a browser with this query: ' + req.url.substr(indexOfQuery) );
+        }
+    }
+
+    /**
+     * // NOTE: Try to change this function/if blck so that it can recieve the domain+path within the query
+     */
+    /**
+     * This checks for a discord oauth return.
+     * If there is one, then we should check what the return data is.
+     */
+
+    else{
+        let query = req.url.substr(1);
+        var tokens = queryString.parse(query);
+        if(tokens.oauth_token){
+            fs.readFile(twitDataLoc, (err, data) => {
+                if(err) throw err;
+                let dat = JSON.parse(decryptData(0, {value: data}));
+                dat.verifier = tokens.oauth_verifier;
+                dat = JSON.stringify(dat)
+                let dec = encryptData(0, {value: dat});
+                fs.writeFile(twitDataLoc, dec, (err) => {
+                    if(err) throw err;
+                    console.log('Saved Twitter Data... Proceeding to final step.');
+                    getAccessTokens();
+                });
+            });
+        }
+
+        var file = path.join(app.getAppPath(), req.url);
+    	fs.exists(file, function(exists) {
+    		if (exists && fs.lstatSync(file).isFile()) {
+
+    			res.setHeader("Content-Type", mime.lookup(file));
+    			res.writeHead(200, {
+    				'Access-Control-Allow-Origin': '*'
+    			});
+    			fs.createReadStream(file).pipe(res);
+    			return;
+    		}
+    		res.writeHead(404);
+    		res.write('Verifying, Please Wait...');
+    		res.end();
+    	});
+    }
+
 }
 var server = http.createServer(handleRequest);
 server.listen(8888, function() {
@@ -220,7 +296,7 @@ server.listen(8888, function() {
 });
 
 
-// Encryption ------------------------------------------------------------------
+// Encryption ------------------------------------------------------------------ Encryption
 function encryptData(event, arg){
     try{
         var encrpt = cryptoJS.AES.encrypt(arg.value, keyPass);
@@ -249,7 +325,7 @@ function decryptData(event, arg){
 ipcMain.on('decrypt-data', decryptData);
 
 
-// Twitter API data ------------------------------------------------------------
+// Twitter API data ------------------------------------------------------------ Twitter API data
 const TwitterApi = require('node-twitter-signin');
 var twitter;
 
@@ -281,7 +357,14 @@ ipcMain.on('load-page', (event, arg) => {
                 let dat = JSON.parse(da);
                 dat.request_token = requestToken
                 dat.request_secret = requestTokenSecret
-                child.loadURL('https://twitter.com/oauth/authenticate?oauth_token=' + requestToken);
+                bLauncher('https://twitter.com/oauth/authenticate?oauth_token=' + requestToken, {browser: ["chrome", "firefox"]}, function(e, browser){
+                    if(e){
+                        return console.log(e);
+                    }
+                    browser.on('stop', function(code){
+                        console.log( 'Browser closed with exit code:', code );
+                    });
+                });
                 dat = JSON.stringify(dat);
                 let dec = encryptData(0, {value: dat});
                 fs.writeFile(twitDataLoc, dec, (err) => {
@@ -419,7 +502,27 @@ function twitterPost(event, postStatus){
 }
 ipcMain.on('twitter-post', twitterPost);
 
-//LOCATION INTERRACTIONS
+// FOR DISCORD -----------------------------------------------------------------
+ipcMain.on('save-data-dis', (event, arg) => {
+    let dat = encryptData(0, {value: arg});
+    fs.writeFile(disDataLoc, dat, (err) => {
+        if (err) throw err;
+        else{
+            console.log('Saved Discord Data!');
+        }
+    })
+});
+ipcMain.on('load-data-dis', (event, arg) => {
+    fs.readFile(disDataLoc, (err, dat) => {
+        if (err) throw err;
+        else{
+            event.sender.send( 'loaded-data-dis', decryptData(0, {value: dat}) );
+            console.log('Loaded Discord Data!');
+        }
+    })
+});
+
+//LOCATION INTERRACTIONS -------------------------------------------------------
 ipcMain.on('get-config', (event, arg) => {
     let cfg = JSON.stringify(config);
     event.sender.send('send-config', cfg);
@@ -427,4 +530,16 @@ ipcMain.on('get-config', (event, arg) => {
 
 ipcMain.on('set-config', (event, arg) => {
     let config = JSON.parse(arg);
+});
+
+
+// FOR WEB BROWSER OPENING -----------------------------------------------------
+
+ipcMain.on('open-browser', (event, arg) => {
+    bLauncher(arg.url, arg.browser, function() {
+        if(e) return console.log(e);
+        browser.on('stop', function(code){
+            console.log('Browser closed with the exit code: ' + code)
+        });
+    });
 });

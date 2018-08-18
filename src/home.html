@@ -16,37 +16,43 @@
             <button class="btn-main btn-color-gold" id="grabXB1" type="button" name="grabXB1" ng-click="xb1CodeGrab()">Grab XB1 Code(s)</button>
         </div>
     </div>
-    <div class="extras-card" id="extras-card">
-        <div class="twitter-column extra-column">
-            <div class="extra-title twitter-title">
-                <h3>TWITTER POST</h3>
+    <div class="extras-card flexRow" id="extras-card">
+        <!-- Twtter Card -->
+        <div class="flexSpaced flexColumn flex-grow1 twit-card">
+            <div class="extra-title twitter-title neon-top-twi">
+                <h3>Twitter Giveaway</h3>
             </div>
             <div class="check-cont">
-                <input ng-change="updateNumLoc($event)" ng-model="twitAmtValue1" class="twitter-checkbox checkbox checkbox-color" type="checkbox" id="twitPostPCCode" name="postPCCode" value="postPCCode">PC CODES</input>
+                <input ng-change="updateNumLoc($event)" ng-model="twitAmtValue1" class="twitter-checkbox checkbox checkbox-color" type="checkbox" id="twitPostPCCode" name="postPCCode" value="postPCCode">PC Codes</input>
             </div>
             <div class="check-cont">
-                <input ng-change="updateNumLoc($event)" ng-model="twitAmtValue2" class="twitter-checkbox checkbox checkbox-color" type="checkbox" id="twitPostPS4Code" name="postPS4Code" value="postPS4Code">PS4 CODES</input>
+                <input ng-change="updateNumLoc($event)" ng-model="twitAmtValue2" class="twitter-checkbox checkbox checkbox-color" type="checkbox" id="twitPostPS4Code" name="postPS4Code" value="postPS4Code">PS4 Codes</input>
             </div>
             <div class="check-cont">
-                <input ng-change="updateNumLoc($event)" ng-model="twitAmtValue3" class="twitter-checkbox checkbox checkbox-color" type="checkbox" id="twitPostXB1Code" name="postXB1Code" value="postXB1Code">XB1 CODES</input>
+                <input ng-change="updateNumLoc($event)" ng-model="twitAmtValue3" class="twitter-checkbox checkbox checkbox-color" type="checkbox" id="twitPostXB1Code" name="postXB1Code" value="postXB1Code">XB1 Codes</input>
             </div>
-            <button class="btn-main2 btn-color-blue" id="twitPostCodes" type="button" name="HelloWorld" ng-click="postCodes()">Post {{sliderValue * twitterMultiplier}} code(s)</button>
+            <button class="btn-main2 btn-color-blue" id="twitPostCodes" name="HelloWorld" ng-click="postCodes()">Post {{sliderValue * twitterMultiplier}} code(s)</button>
+        </div>
+
+        <!-- Discord Card -->
+        <div class="flexColumn flex-grow1 dis-card">
+            <div class="extra-title discord-title neon-top-dis">
+                <h3>Discord Bot</h3>
+            </div>
+            <div class="flexColumn flexSpaced">
+                <button class="btn-main2 btn-color-green" id="dis-connect" ng-click="discordConnect()">Connect</button>
+                <button class="btn-main2 btn-color-red" id="dis-disconnect" ng-click="discordDisconnect()">Disconnect</button>
+            </div>
         </div>
     </div>
 
-
     <div class="bottom-bar" id="bottom-bar">
-        <a class="icon-links" href="#!settings">
-            <div class="tooltip">
-                <span class="tooltiptext">Set up your connections and your code locations</span>
-                <i class="gearIcon hover-spin fas fa-cog fa-lg"></i>
-            </div>
-        </a>
-        <form class="paypaldonate-btn" action="https://www.paypal.com/cgi-bin/webscr" method="post" target="_blank">
-            <input type="hidden" name="cmd" value="_s-xclick">
-            <input type="hidden" name="hosted_button_id" value="HSAKX77HEBP6L">
-            <input type="image" class="donateButton" src="http://tdefton.stream/downloads/donate5.jpg" border="0" name="submit" alt="PayPal - The safer, easier way to pay online!">
-            <img alt="" border="0" src="https://www.paypalobjects.com/en_US/i/scr/pixel.gif" width="1" height="1" hidden>
-        </form>
+        <div class="tooltip">
+            <span class="tooltiptext">Set up your connections and your code locations</span>
+            <a class="icon-links gearIcon hover-spin fas fa-cog fa-lg" href="#!settings"></a>
+        </div>
+        <div class="paypaldonate-btn">
+            <a href="https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=HSAKX77HEBP6L" target="_blank" class="regular-link">Donate</a>
+        </div>
     </div>
 </div>

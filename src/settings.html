@@ -1,25 +1,75 @@
 <div class="sub-cont toggle">
     <div class="top-bar" id="top-bar">
-        <a class="" href="#/!"><i class="x-icon far fa-times-circle fa-lg"></i></a>
+        <div class="flex-spacer"></div>
+        <a class="x-icon far fa-times-circle fa-lg" href="#/!"></a>
     </div>
 
     <div class="main-card" id="main-card">
-        <div class="flexRow pc-box">
-            <input id="pc-input" class="input-box" type="text" name="pcLocation" value="" ng-model="pcLocation" disabled>
-            <button class="btn-main settings-btn btn-color-gold" type="button" name="pcBrowse" ng-click="showPcFileManager()">PC Codes Location</button>
+        <!-- PC Container -->
+        <div class="flexColumn pc-box">
+            <div class="flexRow">
+                <label for="" class="label-min-width">PC</label>
+            </div>
+
+            <div class="flexRow margin-lr-1em">
+                <i id="pc-input" class="sub-text flex-grow2">Location: "<i ng-model="pcLocation" id="pc-Location"></i>"</i>
+            </div>
+
+            <div class="flexRow">
+                <button class="btn-main flex-grow1 btn-color-gold" type="button" name="pcBrowse" ng-click="showPcFileManager()">Change Location</button>
+                <button class="btn-main flex-grow1 btn-color-gold" type="button" name="pcBrowse" ng-click="addPcCodes()">Add Codes</button>
+            </div>
         </div>
-        <div class="flexRow ps4-box">
-            <input id="ps4-input" class="input-box" type="text" name="ps4Location" value="" ng-model="ps4Location" disabled>
-            <button class="btn-main settings-btn btn-color-gold" type="button" name="ps4Browse" ng-click="showPs4FileManager()">PS4 Codes Location</button>
+
+        <!-- PS4 Container -->
+        <div class="flexColumn ps4-box">
+            <div class="flexRow">
+                <label for="" class="label-min-width">PlayStation 4</label>
+            </div>
+
+            <div class="flexRow margin-lr-1em">
+                <i id="ps4-input" class="sub-text flex-grow2">Location: "<i ng-model="ps4Location" id="ps4-Locaion" class="sub-text"></i>"</i>
+            </div>
+
+            <div class="flexRow">
+                <button class="btn-main flex-grow1 btn-color-gold" type="button" name="ps4Browse" ng-click="showPs4FileManager()">Change Location</button>
+                <button class="btn-main flex-grow1 btn-color-gold" type="button" name="ps4Browse" ng-click="addPs4Codes()">Add Codes</button>
+            </div>
         </div>
-        <div class="flexRow xb1-box">
-            <input id="xb1-input" class="input-box" type="text" name="xb1Location" value="" ng-model="xb1Location" disabled>
-            <button class="btn-main settings-btn btn-color-gold" type="button" name="xb1Browse" ng-click="showXb1FileManager()">XB1 Codes Location</button>
+
+        <!-- Xbox One Container -->
+        <div class="flexColumn xb1-box">
+            <div class="flexRow">
+                <label for="" class="label-min-width">Xbox One</label>
+            </div>
+
+            <div class="flexRow margin-lr-1em">
+                <i id="xb1-input" class="sub-text flex-grow2">Location: "<i ng-model="xb1Location" id="xb1-Locaion" class="sub-text"></i>"</i>
+            </div>
+
+            <div class="flexRow">
+                <button class="btn-main flex-grow1 btn-color-gold" type="button" name="xb1Browse" ng-click="showXb1FileManager()">Change Location</button>
+                <button class="btn-main flex-grow1 btn-color-gold" type="button" name="xb1Browse" ng-click="addXb1Codes()">Add Codes</button>
+            </div>
         </div>
-        <a href="#/!" class="button-lnks"><button class="btn-main settings-btn btn-color-gold" type="button" name="Save" onclick="saveLocations()">Save</button></a>
-        <a href="#/!" class="button-lnks"><button class="btn-main settings-btn btn-color-red" type="button" name="Reset" onclick="resetConfig()">Reset</button></a>
+
+
+
+        <div class="spacer"></div>
+
+        <div class="connections-card flexRow">
+            <a href="" class="button-links flex-grow1">
+                <button class="btn-main btn-color-blue flex-grow1" type="button" name="twitterConn" onclick="twitterOauth()">Connect Twitter</button>
+            </a>
+            <a href="#!settings/discord" class="button-links flex-grow1">
+                <button type="button" class="btn-main btn-color-dis flex-grow1" name="discordInt">Discord Settings</button>
+            </a>
+        </div>
     </div>
-    <div class="connections-card">
-        <a href="" class="button-lnks"><button class="btn-main settings-btn btn-color-blue" type="button" name="Reset" onclick="twitterOauth()">Connect Twitter</button></a>
+
+    <div class="flexRow flex-end">
+        <a href="#/!" class="button-links"><button class="btn-main flex-grow1 btn-color-green" type="button" name="Save" onclick="saveLocations()">Save</button></a>
+        <a href="#/!" class="button-links"><button class="btn-main flex-grow1 btn-color-red" type="button" name="Reset" onclick="resetConfig()">Reset</button></a>
     </div>
+
 </div>
