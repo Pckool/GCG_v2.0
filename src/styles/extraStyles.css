@@ -42,6 +42,11 @@ rgba(20, 23,26, 1) #14171A
     transition-delay: 1s;
 }
 
+.options{
+    outline: none;
+    background-color: #3B414F;
+}
+
 .toggle {
     transition: 0s ease all;
     -webkit-transition: 0s ease all;

@@ -16,6 +16,7 @@ var T;                                             // The Twitter Bot
 var twitDataLoc = `${__dirname}/bin/tw.dat`;       // Directory of the twitter data file
 var initDataLoc = `${__dirname}/bin/init.dat`;       // Directory of the twitter data file
 var disDataLoc = `${__dirname}/bin/dis.dat`;
+var twchDataLoc = `${__dirname}/bin/twch.dat`;
 const keyPass = 'WarframeFanChannels';             // Password for encryption
 
 var config = {
@@ -105,9 +106,7 @@ const createWindow = () => {
 			if (err) {
 				throw err;
 			} else {
-				let dat = JSON.parse(decryptData(0, {
-					value: data
-				}));
+				let dat = JSON.parse(decryptData(0, {value: data} ));
 				if (dat.access_token && dat.access_secret) {
 					connectTwitter();
 				}
@@ -216,9 +215,7 @@ function handleRequest(req, res) {
                 });
             }
             else{
-
             }
-
         }
 
         if(req.url.includes('/success_') ){
@@ -267,7 +264,7 @@ function handleRequest(req, res) {
                 fs.writeFile(twitDataLoc, dec, (err) => {
                     if(err) throw err;
                     console.log('Saved Twitter Data... Proceeding to final step.');
-                    getAccessTokens();
+                    getTwitAccessTokens();
                 });
             });
         }
@@ -326,7 +323,6 @@ ipcMain.on('decrypt-data', decryptData);
 
 
 // Twitter API data ------------------------------------------------------------ Twitter API data
-const TwitterApi = require('node-twitter-signin');
 var twitter;
 
 ipcMain.on('get-twi-keys', (event) => {
@@ -397,7 +393,7 @@ ipcMain.on('load-page', (event, arg) => {
 });
 
 
-function getAccessTokens(){
+function getTwitAccessTokens(){
     fs.readFile(twitDataLoc, (err, data) => {
         if(err) throw err;
         let dat = JSON.parse(decryptData(0, {value: data}));
@@ -502,6 +498,30 @@ function twitterPost(event, postStatus){
 }
 ipcMain.on('twitter-post', twitterPost);
 
+// FOR TWITCH.TV ---------------------------------------------------------------
+function getTwchDat(event, arg){
+    fs.readFile(twchDataLoc, (err, dat) => {
+        if (err) throw err;
+        else{
+            event.sender.send( 'loaded-data-twch', decryptData(0, {value: dat}) );
+            console.log('Loaded Twitch Data!');
+        }
+    });
+}
+ipcMain.on('get-twch-data', getTwchDat);
+
+function saveTwchDat(event, arg){
+    let dat = encryptData(0, {value: arg});
+    fs.writeFile(twchDataLoc, dat, (err) => {
+        if (err) throw err;
+        else{
+            console.log('Saved Twitch Data!');
+        }
+    });
+}
+ipcMain.on('save-twch-data', saveTwchDat);
+
+
 // FOR DISCORD -----------------------------------------------------------------
 ipcMain.on('save-data-dis', (event, arg) => {
     let dat = encryptData(0, {value: arg});
@@ -510,7 +530,7 @@ ipcMain.on('save-data-dis', (event, arg) => {
         else{
             console.log('Saved Discord Data!');
         }
-    })
+    });
 });
 ipcMain.on('load-data-dis', (event, arg) => {
     fs.readFile(disDataLoc, (err, dat) => {
@@ -519,7 +539,7 @@ ipcMain.on('load-data-dis', (event, arg) => {
             event.sender.send( 'loaded-data-dis', decryptData(0, {value: dat}) );
             console.log('Loaded Discord Data!');
         }
-    })
+    });
 });
 
 //LOCATION INTERRACTIONS -------------------------------------------------------

@@ -85,7 +85,7 @@ function saveLocations(){
     let cfg = JSON.stringify(config);
     ipcRenderer.send('set-config', cfg); // Setting the config variable for use right now
     ipcRenderer.send( 'encrypt-data', {value: cfg} ); // setting the config file for later use
-    ipcRenderer.on('encrypted-data', (event, arg) =>{
+    ipcRenderer.once('encrypted-data', (event, arg) =>{
         jetpack.write(`${__dirname}/bin/loc.dat`, arg );
         console.log('Location(s) Saved!');
     });
@@ -99,7 +99,8 @@ function resetConfig(){
     ipcRenderer.send('clearTwitterAuth');
     resetDiscordConfig();
 
-    ipcRenderer.send('verify-twit-auth');
+    // ipcRenderer.send('verify-twit-auth');
+    window.location = '#/!';
     notify('Data Reset');
 }
 function LoadConfig(){
@@ -107,7 +108,7 @@ function LoadConfig(){
         console.log('Loading Save File!');
         fs.readFile(`${__dirname}/bin/loc.dat`, (err, data) => {
             ipcRenderer.send('decrypt-data', {value: data});
-            ipcRenderer.on('decrypted-data', (event, arg) => {
+            ipcRenderer.once('decrypted-data', (event, arg) => {
                 config = JSON.parse(arg);
                 console.log('Save Loaded!');
             });
@@ -140,7 +141,7 @@ $(document).ready(function(){
     fs.readFile(`${__dirname}/bin/loc.dat`, (err, data) => {
         if(err) throw err;
         ipcRenderer.send('decrypt-data', {value:data});
-        ipcRenderer.on('decrypted-data', (event, arg) => {
+        ipcRenderer.once('decrypted-data', (event, arg) => {
             let dat = JSON.parse(arg);
             pcLocation = dat.pc;
             ps4Location = dat.ps4;

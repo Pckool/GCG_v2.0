@@ -18,60 +18,75 @@ dis_client.on('message', msg => {
         // If the user is looking for a glyph code
         if(msg.content.includes('*glyph')){
             getDiscordConfig((cfg) => {
-                var subRole = guild.roles.find(role => role.name === cfg.sub_role);
+                var subRole = guild.roles.find(role => role.id === cfg.sub_role);
                 if(cfg.sub_role === null || subRole.members.find(member => member.user === msg.author)){
                     console.log('You are a subscriber! I can send you a glyph!');
                     let msg_content = msg.content.toLowerCase();
                     if(msg_content === ('*glyph pc')){
-                        pcCodeGrab_single( (code) => {
-                            addUserToDict(msg.author, code, (err, prevCode) => {
-
-                                if(err) {
-                                    console.warn('Someone just tried to get a second code.');
-                                    msg.reply('Sorry buddy! You already had a code sent to you :(\nI just sent your assigned code to you!');
-                                    msg.author.send("Here's your assigned code: " + prevCode);
-                                }
-                                else{
-                                    console.log('New user grabbed a code! \nname: ' + msg.author + '\ncode:' + code);
-                                    msg.reply('Thanks for subscribing! I\'ll send you a glyph code :heart:');
-                                    msg.author.send("Here's your PC code: " + code);
-                                    notify('Code given to a new user');
-                                }
-                            });
+                        checkUserDict(msg.author, (err, prevCode) => {
+                            if(err) {
+                                console.warn('Someone just tried to get a second code.');
+                                msg.reply('Sorry buddy! You already had a code sent to you :(\nI just sent your assigned code to you!');
+                                msg.author.send("Here's your assigned code: " + prevCode);
+                            }
+                            else{
+                                pcCodeGrab_single( (code) => {
+                                    addUserToDict(msg.author, code, (err, prevCode) => {
+                                        console.log('New user grabbed a code! \nname: ' + msg.author + '\ncode:' + code);
+                                        msg.reply('Thanks for subscribing! I\'ll send you a glyph code :heart:');
+                                        msg.author.send("Here's your PC code: " + code);
+                                        notify('Code given to a new user');
+                                    });
+                                });
+                            }
+                            if(cfg.options.del_comm){
+                                msg.delete()
+                            }
                         });
+
                     }
                     else if(msg_content === ('*glyph ps4')){
-                        ps4CodeGrab_single((code) => {
-                            addUserToDict(msg.author, code, (err, prevCode) => {
-                                if(err) {
-                                    console.warn('Someone just tried to get a second code.');
-                                    msg.reply('Sorry buddy! You already had a code sent to you :(\nI just sent your assigned code to you!');
-                                    msg.author.send("Here's your assigned code: " + prevCode);
-                                }
-                                else {
-                                    console.log('New user grabbed a code! \nname: ' + msg.author + '\ncode:' + code);
-                                    msg.reply('Thanks for subscribing! I\'ll send you a glyph code :heart:');
-                                    msg.author.send("Here's your PlayStation 4 code: " + code);
-                                    notify('Code given to a new user');
-                                }
-                            });
+                        checkUserDict(msg.author, (err, prevCode) => {
+                            if(err) {
+                                console.warn('Someone just tried to get a second code.');
+                                msg.reply('Sorry buddy! You already had a code sent to you :(\nI just sent your assigned code to you!');
+                                msg.author.send("Here's your assigned code: " + prevCode);
+                            }
+                            else{
+                                ps4CodeGrab_single( (code) => {
+                                    addUserToDict(msg.author, code, (err, prevCode) => {
+                                        console.log('New user grabbed a code! \nname: ' + msg.author + '\ncode:' + code);
+                                        msg.reply('Thanks for subscribing! I\'ll send you a glyph code :heart:');
+                                        msg.author.send("Here's your PlayStation 4 code: " + code);
+                                        notify('Code given to a new user');
+                                    });
+                                });
+                            }
+                            if(cfg.options.del_comm){
+                                msg.delete()
+                            }
                         });
                     }
                     else if(msg_content === ('*glyph xb1')){
-                        xb1CodeGrab_single((code) => {
-                            addUserToDict(msg.author, code, (err, prevCode) => {
-                                if(err) {
-                                    console.warn('Someone just tried to get a second code.');
-                                    msg.reply('Sorry buddy! You already had a code sent to you :(\nI just sent your assigned code to you!');
-                                    msg.author.send("Here's your assigned code: " + prevCode);
-                                }
-                                else{
-                                    console.log('New user grabbed a code! \nname: ' + msg.author + '\ncode:' + code);
-                                    msg.reply('Thanks for subscribing! I\'ll send you a glyph code :heart:');
-                                    msg.author.send("Here's your Xbox One code: " + code);
-                                    notify('Code given to a new user');
-                                }
-                            });
+                        checkUserDict(msg.author, (err, prevCode) => {
+                            if(err) {
+                                console.warn('Someone just tried to get a second code.');
+                                msg.reply('Sorry buddy! You already had a code sent to you :(\nI just sent your assigned code to you!');
+                                msg.author.send("Here's your assigned code: " + prevCode);
+                            }
+                            else{
+                                xb1CodeGrab_single( (code) => {
+                                    addUserToDict(msg.author, code, (err, prevCode) => {
+                                        console.log('New user grabbed a code! \nname: ' + msg.author + '\ncode:' + code);
+                                        msg.reply('Thanks for subscribing! I\'ll send you a glyph code :heart:');
+                                        msg.author.send("Here's your Xboc One code: " + code);
+                                        notify('Code given to a new user');
+                                    });
+                                });
+                            }
+                            if(cfg.options.del_comm){
+                                msg.delete()
+                            }
                         });
                     }
                 }
@@ -97,51 +112,66 @@ dis_client.on('message', msg => {
         if(msg.content.includes('*glyph')){
             if(guild.available){
                 getDiscordConfig((cfg) => {
-                    var subRole = guild.roles.find(role => role.name === cfg.sub_role);
+                    var subRole = guild.roles.find(role => role.id === cfg.sub_role);
                     if(cfg.sub_role === null || subRole.members.find(member => member.user === msg.author)){
                         console.log('You are a subscriber! I can send you a glyph!');
                         let msg_content = msg.content.toLowerCase();
 
                         if(msg_content === ('*glyph pc')){
-                            pcCodeGrab_single((code) => {
-                                addUserToDict(msg.author, code, (err, prevCode) => {
-                                    if(err){
-                                        msg.reply("Here's your PC code: " + prevCode);
-                                    }
-                                    else{
-                                        msg.reply("Here's your PC code: " + code);
-                                        console.log('New user grabbed a code! \nname: ' + msg.author + '\ncode:' + code);
-                                        notify('Code given to a new user');
-                                    }
-                                });
+                            checkUserDict(msg.author, (err, prevCode) => {
+                                if(err) {
+                                    msg.reply("Here's your PC code: " + prevCode);
+                                }
+                                else{
+                                    pcCodeGrab_single( (code) => {
+                                        addUserToDict(msg.author, code, (err, prevCode) => {
+                                            msg.reply("Here's your PC code: " + code);
+                                            console.log('New user grabbed a code! \nname: ' + msg.author + '\ncode:' + code);
+                                            notify('Code given to a new user');
+                                        });
+                                    });
+                                }
+                                if(cfg.options.del_comm){
+                                    msg.delete()
+                                }
                             });
                         }
                         else if(msg_content === ('*glyph ps4')){
-                            ps4CodeGrab_single((code) => {
-                                addUserToDict(msg.author, code, (err, prevCode) => {
-                                    if(err){
-                                        msg.reply("Here's your PlayStation 4 code: " + prevCode);
-                                    }
-                                    else{
-                                        msg.reply("Here's your PlayStation 4 code: " + code);
-                                        console.log('New user grabbed a code! \nname: ' + msg.author + '\ncode:' + code);
-                                        notify('Code given to a new user');
-                                    }
-                                });
+                            checkUserDict(msg.author, (err, prevCode) => {
+                                if(err) {
+                                    msg.reply("Here's your PlayStation 4 code: " + prevCode);
+                                }
+                                else{
+                                    ps4CodeGrab_single( (code) => {
+                                        addUserToDict(msg.author, code, (err, prevCode) => {
+                                            msg.reply("Here's your PlayStation 4 code: " + code);
+                                            console.log('New user grabbed a code! \nname: ' + msg.author + '\ncode:' + code);
+                                            notify('Code given to a new user');
+                                        });
+                                    });
+                                }
+                                if(cfg.options.del_comm){
+                                    msg.delete()
+                                }
                             });
                         }
                         else if(msg_content === ('*glyph xb1')){
-                            xb1CodeGrab_single((code) => {
-                                addUserToDict(msg.author, code, (err, prevCode) => {
-                                    if(err){
-                                        msg.reply("Here's your Xbox One code: " + prevCode);
-                                    }
-                                    else{
-                                        msg.reply("Here's your Xbox One code: " + code);
-                                        console.log('New user grabbed a code! \nname: ' + msg.author + '\ncode:' + code);
-                                        notify('Code given to a new user');
-                                    }
-                                });
+                            checkUserDict(msg.author, (err, prevCode) => {
+                                if(err) {
+                                    msg.reply("Here's your Xbox One code: " + prevCode);
+                                }
+                                else{
+                                    xb1CodeGrab_single( (code) => {
+                                        addUserToDict(msg.author, code, (err, prevCode) => {
+                                            msg.reply("Here's your Xbox One code: " + code);
+                                            console.log('New user grabbed a code! \nname: ' + msg.author + '\ncode:' + code);
+                                            notify('Code given to a new user');
+                                        });
+                                    });
+                                }
+                                if(cfg.options.del_comm){
+                                    msg.delete()
+                                }
                             });
                         }
                     }
@@ -174,7 +204,12 @@ function discordLogin(token, callback){
         }
     })
     .catch(function(err){
-        console.error(err)
+        if(callback){
+            callback(err);
+        }
+        else{
+            console.warn(err);
+        }
     });
 }
 
@@ -199,10 +234,14 @@ function discordLogout(callback){
  */
 function saveDiscordConfig(){
     let discord_config = {
-        client_id: $('#client_id').val(),
-        token: $('#token').val(),
-        sub_role: $('#sub_role').val(),
-        time_as_sub: $('#time_as_sub').val()
+        "client_id":     $('#client_id').val(),
+        "token":         $('#token').val(),
+        "sub_role":      $('#sub_role').val(),
+        "time_as_sub":   $('#time_as_sub').val(),
+        "options": {
+            "del_comm":  $('#del-comm').prop('checked'),
+            "auto_conn": $('#auto-conn').prop('checked')
+        }
     };
     ipcRenderer_dis.send('save-data-dis', JSON.stringify(discord_config) );
     console.log(discord_config);
@@ -222,7 +261,10 @@ function loadDiscordConfig(callback){
             $('#client_id').val(discord_config.client_id);
             $('#token').val(discord_config.token);
             $('#sub_role').val(discord_config.sub_role);
+            console.log(discord_config.sub_role);
             $('#time_as_sub').val(discord_config.time_as_sub);
+            $('#del-comm').prop('checked', discord_config.options.del_comm);
+            $('#auto-conn').prop('checked', discord_config.options.auto_conn);
         }
         if(callback)
             callback(discord_config);
@@ -249,10 +291,14 @@ function getDiscordConfig(callback){
  */
 function resetDiscordConfig(){
     let discord_config = {
-        client_id: "",
-        token: "",
-        sub_role: "",
-        time_as_sub: ""
+        "client_id": "",
+        "token": "",
+        "sub_role": "",
+        "time_as_sub": "",
+        "options": {
+            "del-comm": false,
+            "auto-conn": false
+        }
     };
     ipcRenderer_dis.send('save-data-dis', JSON.stringify(discord_config) );
 }
@@ -267,6 +313,7 @@ app.controller('discordSettingsController', function($scope) {
     $scope.$on('$routeChangeSuccess', function(event, current, prev){
         if(current.controller === 'discordSettingsController'){
             correctContSize();
+            $scope.populateDropdown();
             loadDiscordConfig( () => {
                 checkConnectBtns();
                 checkVal();
@@ -278,12 +325,6 @@ app.controller('discordSettingsController', function($scope) {
     $scope.client_id_in = checkVal;
     $scope.token_in = checkConnectBtns;
 
-    $scope.discord_connect = () => {
-        discordLogin($('#token').val());
-    };
-    $scope.discord_disconnect = function(){
-        discordLogout();
-    };
     $('#server_connect').click(function() {
     	$.ajax({
     		url: 'http://localhost:8888/open_browser/discordauth',
@@ -304,10 +345,10 @@ app.controller('discordSettingsController', function($scope) {
     // if one of the buttons are pressed
     $scope.discordConnect = function(){
         getDiscordConfig( data => {
-            console.log('the token I recieved: ' + data.token);
             discordLogin(data.token, () => {
                 dis_disableConnBtn();
                 dis_enableDisconnBtn();
+                $scope.populateDropdown();
             });
         });
     }
@@ -316,6 +357,17 @@ app.controller('discordSettingsController', function($scope) {
             dis_disableDisconnBtn();
             dis_enableConnBtn();
         });
+
+    }
+    $scope.populateDropdown = function() {
+        if(discordLoggedIn){
+            let options = '';
+            guild.roles.array().forEach((dat, i) => {
+                options += `<option class="options" value="${dat.id}">${dat.name}</option>`;
+            });
+            $('#sub_role').html(options);
+        }
+
 
     }
 
@@ -524,7 +576,40 @@ function addUserToDict(user, code, callback){
             });
         }
     });
+}
 
+function checkUserDict(user, callback){
+    fs.access(assignedCodes, fs.constants.F_OK, (err) => {
+        let newData = {};
+        if(err){
+            newData[user.id] = {};
+            newData[user.id].code = code;
+            fs.writeFile(assignedCodes, JSON.stringify(newData), (err) => {
+                if(err){
+                    console.log(err);
+                }
+                else{
+                    console.log('No assignedCodes file was set. I made one for you!');
+                    callback();
+                }
+            });
+        }
+        else{
+            // get the list of users
+            fs.readFile(assignedCodes, (err, data) => {
+                let newData = JSON.parse(data);
+                // if the user is not in the dictionary
+                if(!newData[user.id]){
+                    callback();
+                }
+                else{
+                    console.log('This is the Users code: ' +  newData[user.id].code);
+                    // if the user is already in the dict, then return the code assigned to the user.
+                    callback(Error('the user already has a code registered.'), newData[user.id].code);
+                }
+            });
+        }
+    });
 }
 
 function clearAssignedCodes(){
@@ -536,4 +621,26 @@ function clearAssignedCodes(){
             console.log('Cleared the assigned glyph codes')
         }
     });
+}
+
+// discord connect buttons
+function dis_disableConnBtn(){
+    // console.log('Disabling the connect button...');
+    $('#dis-connect').prop('disabled', true);
+    $('#dis-connect').addClass('btn-disabled');
+}
+function dis_enableConnBtn(){
+    // console.log('Enabling the connect button...');
+    $('#dis-connect').prop('disabled', false);
+    $('#dis-connect').removeClass('btn-disabled');
+}
+function dis_disableDisconnBtn(){
+    // console.log('Disabling the disconnect button...');
+    $('#dis-disconnect').prop('disabled', true);
+    $('#dis-disconnect').addClass('btn-disabled');
+}
+function dis_enableDisconnBtn(){
+    // console.log('Enabling the disconnect button...');
+    $('#dis-disconnect').prop('disabled', false);
+    $('#dis-disconnect').removeClass('btn-disabled');
 }

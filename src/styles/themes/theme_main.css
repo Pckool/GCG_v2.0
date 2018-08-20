@@ -18,6 +18,10 @@ body{
     background-color: rgba(#f4f4f4, 0);
     border-color: #14171A;
 }
+.checkbox-color-light{
+    background-color: rgba(#f4f4f4, 0);
+    border-color: #f3f3f3;
+}
 .main-checkbox:checked {
 	background-color: #e2bc48;
     border-color: #e2bc48;
@@ -26,6 +30,11 @@ body{
 .twitter-checkbox:checked{
     background-color: #1DA1F2;
     border-color: #1DA1F2;
+    color: #f3f3f3;
+}
+.discord-checkbox:checked{
+    background-color:#7289DA;
+    border-color: #7289DA;
     color: #f3f3f3;
 }
 .checkbox:checked:after {

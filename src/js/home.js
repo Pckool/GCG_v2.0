@@ -4,11 +4,36 @@ import copy from 'copy-to-clipboard';
 var codezz = '';
 
 app.controller('homeController', function($scope){
-    // INIT FUNCTIONS
-    correctContSize();
-    $scope.$on('$locationChangeStart', function(event){
-        correctContSize();
+    // On home load
+    $scope.$on('$routeChangeSuccess', function(event, current, prev){
+        if(current.controller === 'homeController'){
+            correctContSize();
+            $scope.populateDropdown();
+            loadDiscordConfig( () => {
+                checkConnectBtns();
+            });
+            // if discrd is logged in
+            if(discordLoggedIn){
+                dis_disableConnBtn();
+                dis_enableDisconnBtn();
+            }
+            // if discord is not logged in
+            else{
+                dis_disableDisconnBtn();
+                getDiscordConfig( data => {
+                    // if there is no token
+                    if(!data.token){
+                        dis_disableConnBtn();
+                    }
+                    // if there is a token
+                    else{
+                        dis_enableConnBtn();
+                    }
+                });
+            }
+        }
     });
+    // INIT FUNCTIONS
     document.onresize = correctContSize;
     postCodesCheck();
     checkLocations_mainButtons();
@@ -112,28 +137,9 @@ app.controller('homeController', function($scope){
 
     ipcRenderer.on('twit-authed', postCodesCheck);
 
-    // discord
 
-    // On home load
-    // if discrd is logged in
-    if(discordLoggedIn){
-        dis_disableConnBtn();
-        dis_enableDisconnBtn();
-    }
-    // if discord is not logged in
-    else{
-        dis_disableDisconnBtn();
-        getDiscordConfig( data => {
-            // if there is no token
-            if(!data.token){
-                dis_disableConnBtn();
-            }
-            // if there is a token
-            else{
-                dis_enableConnBtn();
-            }
-        });
-    }
+
+
 
     // if one of the buttons are pressed
     $scope.discordConnect = function(){
@@ -160,28 +166,6 @@ app.controller('homeController', function($scope){
     });
 
 });
-
-// discord
-function dis_disableConnBtn(){
-    // console.log('Disabling the connect button...');
-    $('#dis-connect').prop('disabled', true);
-    $('#dis-connect').addClass('btn-disabled');
-}
-function dis_enableConnBtn(){
-    // console.log('Enabling the connect button...');
-    $('#dis-connect').prop('disabled', false);
-    $('#dis-connect').removeClass('btn-disabled');
-}
-function dis_disableDisconnBtn(){
-    // console.log('Disabling the disconnect button...');
-    $('#dis-disconnect').prop('disabled', true);
-    $('#dis-disconnect').addClass('btn-disabled');
-}
-function dis_enableDisconnBtn(){
-    // console.log('Enabling the disconnect button...');
-    $('#dis-disconnect').prop('disabled', false);
-    $('#dis-disconnect').removeClass('btn-disabled');
-}
 
 function pcCodeGrab(callback){
     console.log('pc: ' + config.pc);
@@ -215,12 +199,12 @@ function pcCodeGrab(callback){
                 }
 
             });
-            copy(codez);
+            copy(codez.trim());
             jetpack.write(config.pc, newList.trim());
             counter = 0;
             notify('Code(s) Copied to clipboard!');
             if(callback){
-                callback(codez);
+                callback(codez.trim());
             }
         });
     }
@@ -262,12 +246,12 @@ function ps4CodeGrab(callback){
                 }
 
             });
-            copy(codez);
+            copy(codez.trim());
             jetpack.write(config.ps4, newList.trim());
             counter = 0;
             notify('Code(s) Copied to clipboard!');
             if(callback){
-                callback(codez);
+                callback(codez.trim());
             }
         });
     }
@@ -307,13 +291,12 @@ function xb1CodeGrab(callback){
                     }
                 }
             });
-            console.log(codez);
-            copy(codez);
+            copy(codez.trim());
             jetpack.write(config.xb1, newList.trim());
             counter = 0;
             notify('Code(s) Copied to clipboard!');
             if(callback){
-                callback(codez);
+                callback(codez.trim());
             }
         });
     }
@@ -329,7 +312,7 @@ function postCodesCheck(event, authed){
     if(authed === true){
         console.log('twitter is authorized');
         $('#twitPostCodes').prop("disabled", false);
-        $('#twitPostCodes').toggleClass('btn-color-blue', true);
+        // $('#twitPostCodes').toggleClass('btn-color-blue', true);
         $('#twitPostCodes').toggleClass('btn-disabled', false);
         checkLocations_checkboxes();
         checkCheckBoxes();
@@ -337,19 +320,19 @@ function postCodesCheck(event, authed){
     else{
         console.log('twitter is not authorized');
         $('#twitPostCodes').prop("disabled", true);
-        $('#twitPostCodes').toggleClass('btn-color-blue', false);
+        // $('#twitPostCodes').toggleClass('btn-color-blue', false);
         $('#twitPostCodes').toggleClass('btn-disabled', true);
 
         $('#twitPostPCCode').prop('disabled', true);
-        $('#twitPostPCCode').toggleClass('checkbox-color', false);
+        // $('#twitPostPCCode').toggleClass('checkbox-color', false);
         $('#twitPostPCCode').toggleClass('btn-disabled', true);
 
         $('#twitPostPS4Code').prop('disabled', true);
-        $('#twitPostPS4Code').toggleClass('checkbox-color', false);
+        // $('#twitPostPS4Code').toggleClass('checkbox-color', false);
         $('#twitPostPS4Code').toggleClass('btn-disabled', true);
 
         $('#twitPostXB1Code').prop('disabled', true);
-        $('#twitPostXB1Code').toggleClass('checkbox-color', false);
+        // $('#twitPostXB1Code').toggleClass('checkbox-color', false);
         $('#twitPostXB1Code').toggleClass('btn-disabled', true);
     }
 }
@@ -357,7 +340,7 @@ function postCodesCheck(event, authed){
 function checkLocations_mainButtons(){
     fs.readFile(`${__dirname}/bin/loc.dat`, (err, data) => {
         ipcRenderer.send('decrypt-data', {value: data});
-        ipcRenderer.on('decrypted-data', (event, arg) =>{
+        ipcRenderer.once('decrypted-data', (event, arg) =>{
             console.log(arg);
             config = JSON.parse(arg);
             console.log(config);
@@ -403,43 +386,37 @@ function checkLocations_mainButtons(){
 function checkLocations_checkboxes(){
     fs.readFile(`${__dirname}/bin/loc.dat`, (err, data) => {
         ipcRenderer.send('decrypt-data', {value: data});
-        ipcRenderer.on('decrypted-data', (event, arg) =>{
+        ipcRenderer.once('decrypted-data', (event, arg) =>{
             config = JSON.parse(arg);
             console.log(config);
             if(config.pc !== ''){
                 // pc codes location is available
                 $('#twitPostPCCode').prop('disabled', false);
-                $('#twitPostPCCode').toggleClass('checkbox-color', true);
                 $('#twitPostPCCode').toggleClass('btn-disabled', false);
             }
             else{
                 console.log('trying to disable pc');
                 $('#twitPostPCCode').prop('disabled', true);
-                $('#twitPostPCCode').toggleClass('checkbox-color', false);
                 $('#twitPostPCCode').toggleClass('btn-disabled', true);
             }
             if(config.ps4 !== ''){
                 // ps4 codes location is available
                 $('#twitPostPS4Code').prop('disabled', false);
-                $('#twitPostPS4Code').toggleClass('checkbox-color', true);
                 $('#twitPostPS4Code').toggleClass('btn-disabled', false);
             }
             else{
                 console.log('trying to disable ps4');
                 $('#twitPostPS4Code').prop('disabled', true);
-                $('#twitPostPS4Code').toggleClass('checkbox-color', false);
                 $('#twitPostPS4Code').toggleClass('btn-disabled', true);
             }
             if(config.xb1 !== ''){
                 // xb1 codes location is available
                 $('#twitPostXB1Code').prop('disabled', false);
-                $('#twitPostXB1Code').toggleClass('checkbox-color', true);
                 $('#twitPostXB1Code').toggleClass('btn-disabled', false);
             }
             else{
                 console.log('trying to disable xb1');
                 $('#twitPostXB1Code').prop('disabled', true);
-                $('#twitPostXB1Code').toggleClass('checkbox-color', false);
                 $('#twitPostXB1Code').toggleClass('btn-disabled', true);
             }
         });
@@ -451,18 +428,29 @@ function checkCheckBoxes(){
         // all of the checkboxes are unchecked
         console.log('all of the checkboxes are unchecked');
         $('#twitPostCodes').prop("disabled", true);
-        $('#twitPostCodes').toggleClass('btn-color-blue', false);
         $('#twitPostCodes').toggleClass('btn-disabled', true);
     }
     else if($('#twitPostPCCode:checked').length !== 0 || $('#twitPostPS4Code:checked').length !== 0 || $('#twitPostXB1Code:checked').length !== 0){
         // At least one checkbox is checked
         console.log('At least one checkbox is checked');
         $('#twitPostCodes').prop("disabled", false);
-        $('#twitPostCodes').toggleClass('btn-color-blue', true);
         $('#twitPostCodes').toggleClass('btn-disabled', false);
     }
 }
 
 $(document).ready( () => {
         console.log('DOM ready!');
+        // Checking if I should connect to discord
+        getDiscordConfig((dat) => {
+            if(dat.options.auto_conn){
+                // if there is a token to login with, then use it
+                if(dat.token){
+                    discordLogin(dat.token, (err) => {
+                        if(err){
+                            console.warn('I tried to connect to discord, but there was no token.');
+                        }
+                    });
+                }
+            }
+        });
     });

@@ -37,7 +37,7 @@ body{
 }
 
 /* FONT OVERHAUL */
-body, button, input{
+body, button, input, select{
     font-family:  'Maven Pro', 'Work Sans', 'FreeSet', 'Sugoe UI', 'Open Sans Condensed', sans-serif;
     font-weight: 500;
 }
@@ -56,7 +56,7 @@ label{
     display: flex;
     align-items: center;
     align-content: center;
-    margin: 0 1em;
+    margin: 1em;
     transition-duration: 0.2s;
 }
 .checkbox {
@@ -70,10 +70,6 @@ label{
     transition-duration: 0.2s;
     -webkit-transition-duration: 0.2s;
     margin-right: 0.9em;
-}
-.checkbox-color{
-    background-color: rgba(#f4f4f4, 0);
-    border-color: #14171A;
     cursor: pointer;
 }
 .main-checkbox:checked {
@@ -81,6 +77,10 @@ label{
     -webkit-transition-duration: 0.2s;
 }
 .twitter-checkbox:checked{
+    transition-duration: 0.2s;
+    -webkit-transition-duration: 0.2s;
+}
+.discord-checkbox:checked{
     transition-duration: 0.2s;
     -webkit-transition-duration: 0.2s;
 }
@@ -279,11 +279,11 @@ h3{
 .back-icon:hover{
     transition-duration: 0.3s;
 }
-.flexRow{
+.flex-row{
     display: flex;
     flex-flow: row;
 }
-.flexColumn{
+.flex-column{
     display: flex;
     flex-flow: column;
 }
