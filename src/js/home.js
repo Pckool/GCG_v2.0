@@ -8,29 +8,7 @@ app.controller('homeController', function($scope){
     $scope.$on('$routeChangeSuccess', function(event, current, prev){
         if(current.controller === 'homeController'){
             correctContSize();
-            $scope.populateDropdown();
-            loadDiscordConfig( () => {
-                checkConnectBtns();
-            });
-            // if discrd is logged in
-            if(discordLoggedIn){
-                dis_disableConnBtn();
-                dis_enableDisconnBtn();
-            }
-            // if discord is not logged in
-            else{
-                dis_disableDisconnBtn();
-                getDiscordConfig( data => {
-                    // if there is no token
-                    if(!data.token){
-                        dis_disableConnBtn();
-                    }
-                    // if there is a token
-                    else{
-                        dis_enableConnBtn();
-                    }
-                });
-            }
+            checkConnectBtns();
         }
     });
     // INIT FUNCTIONS
@@ -159,20 +137,17 @@ app.controller('homeController', function($scope){
 
     }
     dis_client.on('ready', () =>{
-        if($('#dis-connect').length){
-            dis_disableConnBtn();
-            dis_enableDisconnBtn();
-        }
+
     });
 
 });
 
 function pcCodeGrab(callback){
-    console.log('pc: ' + config.pc);
+    console.log('pc: ' + coreSettings.pc);
     var codez = '';
     var newList = '';
-    if(config.pc){
-        fs.readFile(config.pc, (err, text) => {
+    if(coreSettings.pc){
+        fs.readFile(coreSettings.pc, (err, text) => {
             if(err) throw err;
             var counter = 1;
             text.toString().split('\n').forEach( (ln) => {
@@ -200,7 +175,7 @@ function pcCodeGrab(callback){
 
             });
             copy(codez.trim());
-            jetpack.write(config.pc, newList.trim());
+            jetpack.write(coreSettings.pc, newList.trim());
             counter = 0;
             notify('Code(s) Copied to clipboard!');
             if(callback){
@@ -218,8 +193,8 @@ function pcCodeGrab(callback){
 function ps4CodeGrab(callback){
     var codez = '';
     var newList = '';
-    if(config.ps4){
-        fs.readFile(config.ps4, function(err, text){
+    if(coreSettings.ps4){
+        fs.readFile(coreSettings.ps4, function(err, text){
             if(err) throw err;
             var counter = 1;
             text.toString().split('\n').forEach(function(ln){
@@ -247,7 +222,7 @@ function ps4CodeGrab(callback){
 
             });
             copy(codez.trim());
-            jetpack.write(config.ps4, newList.trim());
+            jetpack.write(coreSettings.ps4, newList.trim());
             counter = 0;
             notify('Code(s) Copied to clipboard!');
             if(callback){
@@ -264,8 +239,8 @@ function ps4CodeGrab(callback){
 function xb1CodeGrab(callback){
     var codez = '';
     var newList = '';
-    if(config.xb1){
-        fs.readFile(config.xb1, function(err, text){
+    if(coreSettings.xb1){
+        fs.readFile(coreSettings.xb1, function(err, text){
             if(err) throw err;
             var counter = 1;
             text.toString().split('\n').forEach(function(ln){
@@ -292,7 +267,7 @@ function xb1CodeGrab(callback){
                 }
             });
             copy(codez.trim());
-            jetpack.write(config.xb1, newList.trim());
+            jetpack.write(coreSettings.xb1, newList.trim());
             counter = 0;
             notify('Code(s) Copied to clipboard!');
             if(callback){
@@ -338,88 +313,85 @@ function postCodesCheck(event, authed){
 }
 
 function checkLocations_mainButtons(){
-    fs.readFile(`${__dirname}/bin/loc.dat`, (err, data) => {
-        ipcRenderer.send('decrypt-data', {value: data});
-        ipcRenderer.once('decrypted-data', (event, arg) =>{
-            console.log(arg);
-            config = JSON.parse(arg);
-            console.log(config);
-            if(config.pc !== ''){
-                // pc codes location is available
-                $('#grabPC').prop('disabled', false);
-                //$('#grabPC').toggleClass('btn-color-gold', true);
-                $('#grabPC').toggleClass('btn-disabled', false);
-            }
-            else{
-                $('#grabPC').prop('disabled', true);
-                //$('#grabPC').toggleClass('btn-color-gold', false);
-                $('#grabPC').toggleClass('btn-disabled', true);
-            }
-            if(config.ps4 !== ''){
-                // ps4 codes location is available
-                $('#grabPS4').prop('disabled', false);
-                //$('#grabPS4').toggleClass('btn-color-gold', true);
-                $('#grabPS4').toggleClass('btn-disabled', false);
-            }
-            else{
-                $('#grabPS4').prop('disabled', true);
-                //$('#grabPS4').toggleClass('btn-color-gold', false);
-                $('#grabPS4').toggleClass('btn-disabled', true);
-            }
-            if(config.xb1 !== ''){
-                // xb1 codes location is available
-                $('#grabXB1').prop('disabled', false);
-                //$('#grabXB1').toggleClass('btn-color-gold', true);
-                $('#grabXB1').toggleClass('btn-disabled', false);
-            }
-            else{
-                $('#grabXB1').prop('disabled', true);
-                //$('#grabXB1').toggleClass('btn-color-gold', false);
-                $('#grabXB1').toggleClass('btn-disabled', true);
-            }
-
-
-        });
+    ipcRenderer.send('get-core-settings');
+    ipcRenderer.once('send-core-settings', (event, arg) => {
+        let settings = JSON.parse(arg);
+        console.log(settings);
+        coreSettings = settings;
+        console.log(coreSettings);
+        if(coreSettings.pc !== ''){
+            // pc codes location is available
+            $('#grabPC').prop('disabled', false);
+            //$('#grabPC').toggleClass('btn-color-gold', true);
+            $('#grabPC').toggleClass('btn-disabled', false);
+        }
+        else{
+            $('#grabPC').prop('disabled', true);
+            //$('#grabPC').toggleClass('btn-color-gold', false);
+            $('#grabPC').toggleClass('btn-disabled', true);
+        }
+        if(coreSettings.ps4 !== ''){
+            // ps4 codes location is available
+            $('#grabPS4').prop('disabled', false);
+            //$('#grabPS4').toggleClass('btn-color-gold', true);
+            $('#grabPS4').toggleClass('btn-disabled', false);
+        }
+        else{
+            $('#grabPS4').prop('disabled', true);
+            //$('#grabPS4').toggleClass('btn-color-gold', false);
+            $('#grabPS4').toggleClass('btn-disabled', true);
+        }
+        if(coreSettings.xb1 !== ''){
+            // xb1 codes location is available
+            $('#grabXB1').prop('disabled', false);
+            //$('#grabXB1').toggleClass('btn-color-gold', true);
+            $('#grabXB1').toggleClass('btn-disabled', false);
+        }
+        else{
+            $('#grabXB1').prop('disabled', true);
+            //$('#grabXB1').toggleClass('btn-color-gold', false);
+            $('#grabXB1').toggleClass('btn-disabled', true);
+        }
     });
 }
 
 function checkLocations_checkboxes(){
-    fs.readFile(`${__dirname}/bin/loc.dat`, (err, data) => {
-        ipcRenderer.send('decrypt-data', {value: data});
-        ipcRenderer.once('decrypted-data', (event, arg) =>{
-            config = JSON.parse(arg);
-            console.log(config);
-            if(config.pc !== ''){
-                // pc codes location is available
-                $('#twitPostPCCode').prop('disabled', false);
-                $('#twitPostPCCode').toggleClass('btn-disabled', false);
-            }
-            else{
-                console.log('trying to disable pc');
-                $('#twitPostPCCode').prop('disabled', true);
-                $('#twitPostPCCode').toggleClass('btn-disabled', true);
-            }
-            if(config.ps4 !== ''){
-                // ps4 codes location is available
-                $('#twitPostPS4Code').prop('disabled', false);
-                $('#twitPostPS4Code').toggleClass('btn-disabled', false);
-            }
-            else{
-                console.log('trying to disable ps4');
-                $('#twitPostPS4Code').prop('disabled', true);
-                $('#twitPostPS4Code').toggleClass('btn-disabled', true);
-            }
-            if(config.xb1 !== ''){
-                // xb1 codes location is available
-                $('#twitPostXB1Code').prop('disabled', false);
-                $('#twitPostXB1Code').toggleClass('btn-disabled', false);
-            }
-            else{
-                console.log('trying to disable xb1');
-                $('#twitPostXB1Code').prop('disabled', true);
-                $('#twitPostXB1Code').toggleClass('btn-disabled', true);
-            }
-        });
+    ipcRenderer.send('get-core-settings');
+    ipcRenderer.once('send-core-settings', (event, arg) => {
+        console.log('test: ' + arg);
+        let settings = JSON.parse(arg);
+        coreSettings = settings;
+        console.log(coreSettings);
+        if(coreSettings.pc !== ''){
+            // pc codes location is available
+            $('#twitPostPCCode').prop('disabled', false);
+            $('#twitPostPCCode').toggleClass('btn-disabled', false);
+        }
+        else{
+            console.log('trying to disable pc');
+            $('#twitPostPCCode').prop('disabled', true);
+            $('#twitPostPCCode').toggleClass('btn-disabled', true);
+        }
+        if(coreSettings.ps4 !== ''){
+            // ps4 codes location is available
+            $('#twitPostPS4Code').prop('disabled', false);
+            $('#twitPostPS4Code').toggleClass('btn-disabled', false);
+        }
+        else{
+            console.log('trying to disable ps4');
+            $('#twitPostPS4Code').prop('disabled', true);
+            $('#twitPostPS4Code').toggleClass('btn-disabled', true);
+        }
+        if(coreSettings.xb1 !== ''){
+            // xb1 codes location is available
+            $('#twitPostXB1Code').prop('disabled', false);
+            $('#twitPostXB1Code').toggleClass('btn-disabled', false);
+        }
+        else{
+            console.log('trying to disable xb1');
+            $('#twitPostXB1Code').prop('disabled', true);
+            $('#twitPostXB1Code').toggleClass('btn-disabled', true);
+        }
     });
 }
 
@@ -440,6 +412,7 @@ function checkCheckBoxes(){
 
 $(document).ready( () => {
         console.log('DOM ready!');
+        
         // Checking if I should connect to discord
         getDiscordConfig((dat) => {
             if(dat.options.auto_conn){

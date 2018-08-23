@@ -1,0 +1,34 @@
+<div class="sub-cont toggle">
+    <div class="top-bar" id="top-bar">
+        <a class="back-icon far fa-arrow-alt-circle-left fa-lg" href="#!settings"></a>
+        <a class="x-icon far fa-times-circle fa-lg" href="#/!"></a>
+    </div>
+
+    <div class="main-card">
+        <div class="twitch-options flex-column">
+            <div class="flex-row">
+                <div class="flex-column flex-grow1">
+                    <label for="user">Bot Username*</label>
+                    <input type="text" id="twch-username" class="input-box" name="user" value="" ng-model="twch_username" ng-change="" required/>
+                </div>
+                <div class="flex-column flex-grow1">
+                    <label for="channel">Channel*</label>
+                    <input type="text" id="twch-channel" class="input-box" name="channel" value="" ng-model="twch_channel" ng-change="" required/>
+                </div>
+            </div>
+
+            <input type="submit" id="gen-oauth" class="btn-main btn-color-gold" value="Generate an Oauth Token" ng-clicked="gen_oauth()"/>
+
+            <div class="flex-column">
+                <label for="oauth">Oauth Token*</label>
+                <input type="password" id="twch-oauth" class="input-box" name="oauth" value="" ng-model="twch_oauth" ng-change="" required/>
+            </div>
+
+            <div class="flex-row flex-end">
+                <button id="twch-connect" class="btn-main btn-color-green flex-grow1" name="twitch-connect" ng-click="twitchConnect()">Connect</button>
+                <button id="twch-disconnect" class="btn-main btn-color-red flex-grow1" name="twitch-disconnect" ng-click="twitchDisconnect()">Disconnect</button>
+            </div>
+
+        </div>
+    </div>
+</div>

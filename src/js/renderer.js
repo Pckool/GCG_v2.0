@@ -13,6 +13,10 @@ app.config(function($routeProvider){
         templateUrl: 'discord.html',
         controller: 'discordSettingsController'
     })
+    .when('/settings/twitch', {
+        templateUrl: 'twitch.html',
+        controller: 'twitchSettingsController'
+    })
     .otherwise({
         template: '<div><h2>You have broken the app and went somewhere you weren\'t supposed to!</h2></div>' +
         '<div><p>Please restart or click the button below.</p> <button href="#/!">Go to Home</button></div>'

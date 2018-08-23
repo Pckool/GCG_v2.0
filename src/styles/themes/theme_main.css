@@ -37,6 +37,7 @@ body{
     border-color: #7289DA;
     color: #f3f3f3;
 }
+
 .checkbox:checked:after {
 	color: #f3f3f3;
 }

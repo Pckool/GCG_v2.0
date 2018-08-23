@@ -226,13 +226,16 @@ function discordLogout(callback){
             callback();
         }
     })
-    .catch(console.error);
+    .catch((err) => {
+        callback(err);
+        console.error(err);
+    });
 }
 
 /**
  * This function saves a discord config file with the values currently present in the discord settings menu.
  */
-function saveDiscordConfig(){
+function saveDiscordConfig(callback){
     let discord_config = {
         "client_id":     $('#client_id').val(),
         "token":         $('#token').val(),
@@ -244,6 +247,17 @@ function saveDiscordConfig(){
         }
     };
     ipcRenderer_dis.send('save-data-dis', JSON.stringify(discord_config) );
+    ipcRenderer_dis.once('saved-data-dis', (event, arg) => {
+        if(callback){
+            if(arg && arg.error){
+                callback(arg.error);
+            }
+            else{
+                callback();
+            }
+
+        }
+    });
     console.log(discord_config);
 }
 
@@ -300,7 +314,16 @@ function resetDiscordConfig(){
             "auto-conn": false
         }
     };
-    ipcRenderer_dis.send('save-data-dis', JSON.stringify(discord_config) );
+    discordLogout((err) => {
+        if(err){
+            console.log('Discord wasn\'t logged in... Resetting data now...');
+            ipcRenderer_dis.send('save-data-dis', JSON.stringify(discord_config) );
+        }
+        else{
+            ipcRenderer_dis.send('save-data-dis', JSON.stringify(discord_config) );
+        }
+    });
+
 }
 
 
@@ -326,31 +349,41 @@ app.controller('discordSettingsController', function($scope) {
     $scope.token_in = checkConnectBtns;
 
     $('#server_connect').click(function() {
-    	$.ajax({
-    		url: 'http://localhost:8888/open_browser/discordauth',
-    		type: 'GET',
-    		data: {
-                client_id: $('#client_id').val(),
-                permissions: "8",
-                scope: "bot"
-    		},
-    		success: function(msg) {
-    			alert('Email Sent');
-    		}
-    	});
+        console.log('the URl has been changed. Opening the browser...');
+        ipcRenderer_dis.send('open-browser2', {url: `http://discordapp.com/api/oauth2/authorize?client_id=${$('#client_id').val()}&permissions=8&scope=bot`});
+    	// $.ajax({
+    	// 	url: 'http://localhost:8888/open_browser/discordauth',
+    	// 	type: 'GET',
+    	// 	data: {
+        //         client_id: $('#client_id').val(),
+        //         permissions: "8",
+        //         scope: "bot"
+    	// 	},
+    	// 	success: function(msg) {
+    	// 		alert('Email Sent');
+    	// 	}
+    	// });
     });
 
 
 
     // if one of the buttons are pressed
     $scope.discordConnect = function(){
-        getDiscordConfig( data => {
-            discordLogin(data.token, () => {
-                dis_disableConnBtn();
-                dis_enableDisconnBtn();
-                $scope.populateDropdown();
+        if($('#token').length){
+            saveDiscordConfig( err => {
+                if(err){
+                    notify('There was a problem saving your discord informaton...');
+                }
+                getDiscordConfig( data => {
+                    discordLogin(data.token, () => {
+                        dis_disableConnBtn();
+                        dis_enableDisconnBtn();
+                        $scope.populateDropdown();
+                    });
+                });
             });
-        });
+        }
+
     }
     $scope.discordDisconnect = function(){
         discordLogout( () => {

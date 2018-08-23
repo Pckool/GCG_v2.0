@@ -12,7 +12,7 @@
             </div>
 
             <div class="flex-row margin-lr-1em">
-                <i id="pc-input" class="sub-text flex-grow2">Location: "<i ng-model="pcLocation" id="pc-Location"></i>"</i>
+                <i id="pc-input" class="sub-text flex-grow2">Location: "<i ng-model="pcLocation" id="pc-location"></i>"</i>
             </div>
 
             <div class="flex-row">
@@ -28,7 +28,7 @@
             </div>
 
             <div class="flex-row margin-lr-1em">
-                <i id="ps4-input" class="sub-text flex-grow2">Location: "<i ng-model="ps4Location" id="ps4-Locaion" class="sub-text"></i>"</i>
+                <i id="ps4-input" class="sub-text flex-grow2">Location: "<i ng-model="ps4Location" id="ps4-locaion" class="sub-text"></i>"</i>
             </div>
 
             <div class="flex-row">
@@ -44,7 +44,7 @@
             </div>
 
             <div class="flex-row margin-lr-1em">
-                <i id="xb1-input" class="sub-text flex-grow2">Location: "<i ng-model="xb1Location" id="xb1-Locaion" class="sub-text"></i>"</i>
+                <i id="xb1-input" class="sub-text flex-grow2">Location: "<i ng-model="xb1Location" id="xb1-locaion" class="sub-text"></i>"</i>
             </div>
 
             <div class="flex-row">
@@ -52,8 +52,6 @@
                 <button class="btn-main flex-grow1 btn-color-gold" type="button" name="xb1Browse" ng-click="addXb1Codes()">Add Codes</button>
             </div>
         </div>
-
-
 
         <div class="spacer"></div>
 
@@ -64,6 +62,18 @@
             <a href="#!settings/discord" class="button-links flex-grow1">
                 <button type="button" class="btn-main btn-color-dis flex-grow1" name="discordInt">Discord Settings</button>
             </a>
+            <a href="#!settings/twitch" class="button-links flex-grow1">
+                <button type="button" class="btn-main btn-color-twch flex-grow1" name="twitchInt">Twitch Settings</button>
+            </a>
+        </div>
+
+        <div class="spacer"></div>
+
+        <div id="mainOptions" class="flex-column">
+            <label for="">Windows Options</label>
+            <div class="check-cont">
+                <input type="checkbox" id="run-on-start" class="core-settings-change main-checkbox checkbox checkbox-color-light" name="runOnStart" value="" ng-model="run_on_start" ng-change="coreSettingsChange()">Run on Windows Start</input>
+            </div>
         </div>
     </div>
 

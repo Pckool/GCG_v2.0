@@ -1,31 +1,40 @@
-var TwitchApi = require('twitch-api');
-var twitch;
+var TwitchJS = require('twitch-js');
+var twitchOptions = {
+    options: {
+        clientId: 'aqj40giuob8eeeed61a01ath7dn9f2',
+    },
+    channels: ['someUserName']
+}
+var twitchConfig = {
+    client_id: 'aqj40giuob8eeeed61a01ath7dn9f2',
+    redirect_uri: 'http://localhost:8888/twitch-passport',
+    response_type: 'code',
+    scope: 'channel_subscriptions channel_check_subscription'
+}
+var twitchClient;
 
-getTwitchConfig((dat) => {
-    twitch = new TwitchApi({
-        clientId: '',
-        clientSecret: '',
-        redirectUri: '',
-        scopes: ['administrator']
-    });
-});
-function getOauthURL(){
-    $.ajax({
-        url: 'http://localhost:8888/open_browser/twitch',
-        type: 'GET',
-        data: {
-            client_id: $('#client_id').val(),
-            permissions: "8",
-            scope: "bot"
+function getTwitchConfig(dat) {
+    twitchClient = new TwitchJS.client(options);
+}
+
+function getTwitchAuth(){
+    if(twitchClient){
+        twitchClient.api({
+            url: 'https://api.twitch.tv/kraken?client_id',
+            headers: {
+                'Client-ID': twitchOptions.options.clientId
+            }
         },
-        success: function(msg) {
-            alert('Email Sent');
-        }
-    });
+        function (err, res, body){
+            console.log(body);
+        });
+    }
+    console.log('I got here!');
+    ipcRenderer_dis.send('open-browser2', {url: `https://api.twitch.tv/kraken/oauth2/authenticate?client_id=${twitchConfig.client_id}&redirect_uri=${twitchConfig.redirect_uri}&response_type=${twitchConfig.response_type}&scope=${twitchConfig.scope}`});
 }
 
 function twitchLogin(){
-    twitch.getAccessToken(code, function(err, body){
+    twitchClient.getAccessToken(code, function(err, body){
         if (err){
           console.log(err);
         } else {
@@ -40,11 +49,10 @@ function twitchLogin(){
 }
 
 function getTwitchConfig(callback){
-    let twchcfg = {
-        "clientId": 'fqvmmi2l6xv4r3hn39tbfk5avtyokf',
-        "clientSecret": 'ayjl5fzx5t7nxrf97wia0sy6dil2zq',
-        "redirectUri": 'http://localhost:8888/twitch',
-        "scopes": ['administrator'],
-        "accessToken": ''
-    };
+    
 }
+
+app.controller('twitchSettingsController', function($scope) {
+    console.log('We are in twitch settings');
+    $('#gen-oauth').click(getTwitchAuth);
+});

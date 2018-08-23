@@ -3,8 +3,9 @@ const url = require('url');
 const {ipcRenderer} = require('electron');
 const $ = require('jquery');
 const {dialog} = require('electron').remote;
+var bLauncher = require('launch-browser');        // Launch-Browser
 
-var config;
+var coreSettings;
 
 
 

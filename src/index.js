@@ -1,29 +1,45 @@
-import { app, autoUpdater, BrowserWindow, ipcMain, dialog } from 'electron';
+import { app, autoUpdater, BrowserWindow, ipcMain, dialog, Menu, Tray } from 'electron';
 require('electron-debug')();
 //require('electron-reload')(__dirname);
 var http = require('http');
 var fs = require('fs');
+var jsdom = require('jsdom');
+var {JSDOM} = jsdom;
 var url = require('url');
 var mime = require('mime');
 var path = require('path');
 var bLauncher = require('launch-browser');        // Launch-Browser
+var autoLaunch = require('auto-launch');
 var queryString = require('query-string');         // An easy way to parse URL queries
 const twitterAPI = require('node-twitter-api');    // Twitter Authenticator
 var twit = require('twit');                        // Twitter Interface
 const cryptoJS = require('crypto-js');             // For cyphers
 
 var T;                                             // The Twitter Bot
+var coreSettingsLoc = `${__dirname}/bin/loc.dat`;
 var twitDataLoc = `${__dirname}/bin/tw.dat`;       // Directory of the twitter data file
 var initDataLoc = `${__dirname}/bin/init.dat`;       // Directory of the twitter data file
 var disDataLoc = `${__dirname}/bin/dis.dat`;
 var twchDataLoc = `${__dirname}/bin/twch.dat`;
-const keyPass = 'WarframeFanChannels';             // Password for encryption
+const keyPass = 'WarframeFanChannels';
+
+var appIcon;
+var gcgIcon = path.join(__dirname, '/media/logo/gcg_icon_.ico');
+var gcgIcon_wire = path.join(__dirname, '/media/logo/gcg_icon_wire.ico');
 
 var config = {
     pc: '',
     ps4: '',
     xb1: ''
 }
+var coreSettings = {
+    pc: '',
+    ps4: '',
+    xb1: '',
+    options: {
+        run_on_start: false
+    }
+};
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (require('electron-squirrel-startup')) { // eslint-disable-line global-require
@@ -35,6 +51,7 @@ if (require('electron-squirrel-startup')) { // eslint-disable-line global-requir
 let mainWindow;
 let child;
 let popup;
+let browser;
 
 const createWindow = () => {
 	// Create the browser window.
@@ -47,7 +64,7 @@ const createWindow = () => {
 		backgroundColor: '#3B414F',
 		frame: true,
 		autoHideMenuBar: true,
-		icon: path.join(__dirname, '/media/logo/gcg_icon_.ico'),
+		icon: gcgIcon
 	});
 
 	// and load the index.html of the app.
@@ -63,6 +80,56 @@ const createWindow = () => {
 		// when you should delete the corresponding element.
 		mainWindow = null;
 	});
+
+    mainWindow.on('minimize', function(event){
+        appIcon.setImage(gcgIcon);
+        event.preventDefault();
+        mainWindow.hide();
+        appIcon.displayBalloon({
+            icon: gcgIcon,
+            title: 'Glyph Code Grabber',
+            content: 'Glyph Code Grabber has been minimized. Check the System tray to open it again.'
+        })
+
+        var contextMenu2 = Menu.buildFromTemplate([
+            {
+                label: 'Show App',
+                click:  function(){
+                    mainWindow.show();
+                }
+            },
+            {
+                label: 'Quit',
+                click:  function(){
+                    application.isQuiting = true;
+                    application.quit();
+                }
+            }
+        ]);
+        appIcon.setToolTip('Glyph Code Grabber');
+        appIcon.setContextMenu(contextMenu2);
+    });
+
+    // When the main window is shown
+    mainWindow.on('show', function(event){
+        appIcon.setImage(gcgIcon_wire);
+        var contextMenu = Menu.buildFromTemplate([
+            {
+                label: 'Quit',
+                click:  function(){
+                    application.isQuiting = true;
+                    application.quit();
+                }
+            }
+        ]);
+        appIcon.setContextMenu(contextMenu);
+    });
+
+    appIcon = new Tray(gcgIcon_wire);
+    appIcon.setToolTip('Glyph Code Grabber');
+    appIcon.on('double-click', function() {
+        mainWindow.show();
+    });
 
 	// Twitter data json init
 	fs.access(twitDataLoc, fs.constants.F_OK, (err) => {
@@ -114,6 +181,7 @@ const createWindow = () => {
 
 		});
 	});
+    mkTwchCfg();
 };
 
 // This method will be called when Electron has finished
@@ -138,6 +206,68 @@ app.on('activate', () => {
 	}
 });
 
+// CORE Settings ---------------------------------------------------------------
+function setCoreSettings(event, arg){
+    let encryptedData = encryptData(0, {value: arg.value});
+    fs.writeFile(coreSettingsLoc, encryptedData, (err) => {
+        if(err){
+            console.error(err);
+        }
+        else{
+            console.log('Saved the Core Settings.');
+        }
+    });
+}
+ipcMain.on('set-core-settings', setCoreSettings);
+
+function getCoreSettings(event, arg){
+    fs.readFile(coreSettingsLoc, (err, dat) => {
+        if(err){
+            console.error(err);
+        }
+        else{
+            let decryptedData = decryptData(0, {value: dat});
+            if(arg && arg.callback){
+                arg.callback(decryptedData);
+            }
+            else{
+                if(event != 0){
+                    event.sender.send('send-core-settings', decryptedData);
+                }
+                return decryptedData;
+            }
+        }
+
+    });
+}
+ipcMain.on('get-core-settings', getCoreSettings);
+
+function resetCoreSettings(event, arg){
+    let blankSettings = {
+        pc: '',
+        ps4: '',
+        xb1: '',
+        options: {
+            run_on_start: false
+        }
+    };
+    setCoreSettings(0, {value: JSON.stringify(blankSettings)});
+}
+ipcMain.on('reset-core-settings', resetCoreSettings);
+
+// LOCATION INTERRACTIONS -------------------------------------------------------
+
+ipcMain.on('get-config', (event, arg) => {
+    let cfg = JSON.stringify(config);
+    event.sender.send('send-config', cfg);
+});
+
+ipcMain.on('set-config', (event, arg) => {
+    let config = JSON.parse(arg);
+});
+
+// Other Windows ---------------------------------------------------------------
+
 const createPopup = (filename) => {
     popup = new BrowserWindow({
         height: 200,
@@ -149,6 +279,7 @@ const createPopup = (filename) => {
         autoHideMenuBar: true,
         backgroundColor: '#3B414F'
     });
+    popup.loadURL(`file://${__dirname}/${filename}.html`);
 
     popup.on('closed', () => {
 		// Dereference the window object, usually you would store windows
@@ -161,8 +292,48 @@ const createPopup = (filename) => {
     });
 }
 
-// In this file you can include the rest of your app's specific main process
-// code. You can also put them in separate files and import them here.
+const newWebView = (event, arg) => {
+    // VERY IMPORTANT to use the webview-middleman javascript functions BEFORE calling this funcion.
+    // Otherwise you will just load the previous webpage
+    browser = new BrowserWindow({
+        parent: mainWindow,
+        width: 600,
+		height: 800,
+        minHeight: 730,
+		minWidth: 350,
+        autoHideMenuBar: true,
+        backgroundColor: '#3B414F'
+    });
+    JSDOM.fromFile(`${__dirname}/webview.html`).then(dom => {
+        const document = dom.window.document;
+        const bodyEl = document.body; // implicitly created
+        bodyEl.innerHTML = `<webview id="webview" src="${arg.url}"></webview>`;
+        console.log(dom.serialize());
+        fs.writeFile(`${__dirname}/webview.html`, dom.serialize(), (err) => {
+            if(err){
+                throw err;
+            }
+            else{
+                console.log('Changed the URL');
+                browser.loadURL(`file://${__dirname}/webview.html`);
+            }
+        });
+        console.log(bodyEl);
+    }).catch(console.log);
+
+
+
+    browser.on('closed', () => {
+		// Dereference the window object, usually you would store windows
+		// in an array if your app supports multi windows, this is the time
+		// when you should delete the corresponding element.
+		browser = null;
+	});
+    browser.on('ready', () => {
+
+    });
+}
+ipcMain.on('open-browser2', newWebView);
 
 // For Updating ----------------------------------------------------------------
 require('update-electron-app')({
@@ -179,6 +350,46 @@ if (isDev) {
 } else {
 	console.log('Running in production');
 }
+
+// For auto-launch -------------------------------------------------------------
+var gcgAutoLauncher = new autoLaunch({
+    name: 'Glyph_Code_Grabber'
+});
+function autoLauncher(event, arg){
+    if(arg.enabled){
+        gcgAutoLauncher.enable()
+        .then( function(){
+            console.log('Launch on Start Enabled!');
+        })
+        .catch(function(err){
+            console.log('yeet');
+            throw err;
+        });
+
+    }
+    else{
+        gcgAutoLauncher.disable()
+        .then( function(){
+            console.log('Launch on Start Disabled!');
+        })
+        .catch(function(err){
+            throw err;
+        });
+
+    }
+}
+ipcMain.on('auto-launch', autoLauncher);
+
+gcgAutoLauncher.isEnabled()
+.then(function(isEnabled){
+    if(isEnabled){
+        return;
+    }
+    gcgAutoLauncher.enable();
+})
+.catch(function(err){
+    // handle error
+});
 
 // Localized Server ------------------------------------------------------------ Localized Server
 function handleRequest(req, res) {
@@ -204,19 +415,19 @@ function handleRequest(req, res) {
     // if the request if for discord auth
     if(req.url.includes('/discord') ){
         // This is for a request to open a new browser!
-        if(req.url.includes('/open_browser') && indexOfQuery >= 0){
-            if(!req.url.includes('/wurl')){
-                console.log('Got a request to open a browser with this query: ' + req.url.substr(indexOfQuery) );
-                bLauncher('http://discordapp.com/api/oauth2/authorize'+ req.url.substr(indexOfQuery), {browser: ["chrome", "firefox"]}, (e, browser) => {
-                    if(e) return console.log(e);
-                    browser.on('stop', function(code){
-                        console.log( 'Browser closed with exit code:', code );
-                    });
-                });
-            }
-            else{
-            }
-        }
+        // if(req.url.includes('/open_browser') && indexOfQuery >= 0){
+        //     if(!req.url.includes('/wurl')){
+        //         console.log('Got a request to open a browser with this query: ' + req.url.substr(indexOfQuery) );
+        //         bLauncher('http://discordapp.com/api/oauth2/authorize'+ req.url.substr(indexOfQuery), {browser: ["chrome", "firefox"]}, (e, browser) => {
+        //             if(e) return console.log(e);
+        //             browser.once('stop', function(code){
+        //                 console.log( 'Browser closed with exit code:', code );
+        //             });
+        //         });
+        //     }
+        //     else{
+        //     }
+        // }
 
         if(req.url.includes('/success_') ){
             console.log('query: ' + req.url.substr(indexOfQuery));
@@ -237,9 +448,31 @@ function handleRequest(req, res) {
     }
     // if the request is for twitch
     else if(req.url.includes('/twitch')){
+
         // This is for a request to open a new browser!
         if(req.url.includes('/open_browser') && indexOfQuery >= 0){
             console.log('Got a request to open a browser with this query: ' + req.url.substr(indexOfQuery) );
+            if(!req.url.includes('/wurl')){
+                console.log('Got a request to open a browser with this query: ' + req.url.substr(indexOfQuery) );
+                bLauncher('https://api.twitch.tv/kraken/oauth2/authenticate'+ req.url.substr(indexOfQuery), {browser: ["chrome", "firefox"]}, (e, browser) => {
+                    if(e) return console.log(e);
+                    browser.on('stop', function(code){
+                        console.log( 'Browser closed with exit code:', code );
+                    });
+                });
+            }
+            else{
+            }
+        }
+        if(req.url.includes('-passport')){
+            let dat = queryString.parse(req.url.substr(indexOfQuery));
+            console.log(dat);
+            storeTwitchCode(dat);
+
+            if(browser){
+                browser.close();
+            }
+
         }
     }
 
@@ -281,7 +514,7 @@ function handleRequest(req, res) {
     			return;
     		}
     		res.writeHead(404);
-    		res.write('Verifying, Please Wait...');
+    		res.write('Finshed! You can close this tab now.');
     		res.end();
     	});
     }
@@ -499,19 +732,26 @@ function twitterPost(event, postStatus){
 ipcMain.on('twitter-post', twitterPost);
 
 // FOR TWITCH.TV ---------------------------------------------------------------
-function getTwchDat(event, arg){
+function getTwchCfg(event, arg){
     fs.readFile(twchDataLoc, (err, dat) => {
         if (err) throw err;
         else{
-            event.sender.send( 'loaded-data-twch', decryptData(0, {value: dat}) );
+            let decryptedDat = decryptData(0, {value: dat});
+            if(event != 0){
+                event.sender.send( 'loaded-data-twch',  decryptedDat);
+            }
+            if(arg.callback){
+                arg.callback(decryptedDat);
+            }
+
             console.log('Loaded Twitch Data!');
         }
     });
 }
-ipcMain.on('get-twch-data', getTwchDat);
+ipcMain.on('get-twch-data', getTwchCfg);
 
-function saveTwchDat(event, arg){
-    let dat = encryptData(0, {value: arg});
+function saveTwchCfg(event, arg){
+    let dat = encryptData(0, {value: arg.config});
     fs.writeFile(twchDataLoc, dat, (err) => {
         if (err) throw err;
         else{
@@ -519,16 +759,59 @@ function saveTwchDat(event, arg){
         }
     });
 }
-ipcMain.on('save-twch-data', saveTwchDat);
+ipcMain.on('save-twch-data', saveTwchCfg);
+
+/**
+ * Checks for a dat file for twitch. If there is none found, it will create it.
+ * @return {None}
+ */
+function mkTwchCfg(){
+    fs.access(twchDataLoc, fs.constants.F_OK, (err) => {
+        if(err){
+            let twchcfg = {
+                clientId: 'aqj40giuob8eeeed61a01ath7dn9f2',
+                clientSecret: '',
+                scopes: 'channel_subscriptions channel_check_subscription',
+                code: '',
+                accessToken: ''
+            };
+            let dat = encryptData(0, {value: twchcfg});
+            fs.writeFile(twchDataLoc, dat, (err) => {
+                if (err) throw err;
+                else{
+                    console.log('Created Twitch Data file!');
+                }
+            });
+        }
+        else{
+            console.log('twitch data file found!');
+        }
+    });
+
+}
+
+
+function storeTwitchCode(code){
+    getTwchCfg(0, {callback: (dat) => {
+        let parsedDat = JSON.parse(dat);
+        parsedDat.code = code;
+        saveTwchCfg(0, {config: parsedDat});
+    }});
+}
+
+
 
 
 // FOR DISCORD -----------------------------------------------------------------
 ipcMain.on('save-data-dis', (event, arg) => {
     let dat = encryptData(0, {value: arg});
     fs.writeFile(disDataLoc, dat, (err) => {
-        if (err) throw err;
+        if (err) {
+             event.sender.send('saved-data-dis', {error: err});
+        }
         else{
             console.log('Saved Discord Data!');
+            event.sender.send('saved-data-dis');
         }
     });
 });
@@ -542,21 +825,11 @@ ipcMain.on('load-data-dis', (event, arg) => {
     });
 });
 
-//LOCATION INTERRACTIONS -------------------------------------------------------
-ipcMain.on('get-config', (event, arg) => {
-    let cfg = JSON.stringify(config);
-    event.sender.send('send-config', cfg);
-});
-
-ipcMain.on('set-config', (event, arg) => {
-    let config = JSON.parse(arg);
-});
-
 
 // FOR WEB BROWSER OPENING -----------------------------------------------------
 
 ipcMain.on('open-browser', (event, arg) => {
-    bLauncher(arg.url, arg.browser, function() {
+    bLauncher(arg.url, {browser: ["chrome", "firefox"]}, function(e, browser) {
         if(e) return console.log(e);
         browser.on('stop', function(code){
             console.log('Browser closed with the exit code: ' + code)

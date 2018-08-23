@@ -176,6 +176,10 @@ label{
     color: #7289DA;
     border-color: #7289DA;
 }
+.btn-color-twch:hover{
+    border-color: #6441A4;
+    color: #6441A4;
+}
 .slider {
     -webkit-appearance: none;  /* Override default CSS styles */
     appearance: none;
