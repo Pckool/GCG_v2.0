@@ -135,7 +135,7 @@ const createWindow = () => {
 	fs.access(twitDataLoc, fs.constants.F_OK, (err) => {
 		if (err) {
 			fs.readFile(initDataLoc, (err, data) => {
-				var text = decryptData(0, {
+				var text = decryptData(undefined, {
 					value: data
 				});
 				var jsn = JSON.parse(text);
@@ -149,7 +149,7 @@ const createWindow = () => {
 					access_secret: ''
 				}
 				var dat = JSON.stringify(twitData);
-				let dec = encryptData(0, {
+				let dec = encryptData(undefined, {
 					value: dat
 				});
 				fs.writeFile(twitDataLoc, dec, (err) => {
@@ -173,7 +173,7 @@ const createWindow = () => {
 			if (err) {
 				throw err;
 			} else {
-				let dat = JSON.parse(decryptData(0, {value: data} ));
+				let dat = JSON.parse(decryptData(undefined, {value: data} ));
 				if (dat.access_token && dat.access_secret) {
 					connectTwitter();
 				}
@@ -208,7 +208,7 @@ app.on('activate', () => {
 
 // CORE Settings ---------------------------------------------------------------
 function setCoreSettings(event, arg){
-    let encryptedData = encryptData(0, {value: arg.value});
+    let encryptedData = encryptData(undefined, {value: arg.value});
     fs.writeFile(coreSettingsLoc, encryptedData, (err) => {
         if(err){
             console.error(err);
@@ -226,7 +226,7 @@ function getCoreSettings(event, arg){
             console.error(err);
         }
         else{
-            let decryptedData = decryptData(0, {value: dat});
+            let decryptedData = decryptData(undefined, {value: dat});
             if(arg && arg.callback){
                 arg.callback(decryptedData);
             }
@@ -293,8 +293,7 @@ const createPopup = (filename) => {
 }
 
 const newWebView = (event, arg) => {
-    // VERY IMPORTANT to use the webview-middleman javascript functions BEFORE calling this funcion.
-    // Otherwise you will just load the previous webpage
+    console.log('Opening a browser window.');
     browser = new BrowserWindow({
         parent: mainWindow,
         width: 600,
@@ -490,10 +489,10 @@ function handleRequest(req, res) {
         if(tokens.oauth_token){
             fs.readFile(twitDataLoc, (err, data) => {
                 if(err) throw err;
-                let dat = JSON.parse(decryptData(0, {value: data}));
+                let dat = JSON.parse(decryptData(undefined, {value: data}));
                 dat.verifier = tokens.oauth_verifier;
                 dat = JSON.stringify(dat)
-                let dec = encryptData(0, {value: dat});
+                let dec = encryptData(undefined, {value: dat});
                 fs.writeFile(twitDataLoc, dec, (err) => {
                     if(err) throw err;
                     console.log('Saved Twitter Data... Proceeding to final step.');
@@ -530,7 +529,7 @@ server.listen(8888, function() {
 function encryptData(event, arg){
     try{
         var encrpt = cryptoJS.AES.encrypt(arg.value, keyPass);
-        if(event !== 0)
+        if(event !== undefined)
             event.sender.send('encrypted-data', encrpt.toString());
         return encrpt;
     }
@@ -544,7 +543,7 @@ function decryptData(event, arg){
     try{
         var bytes = cryptoJS.AES.decrypt(arg.value.toString(), keyPass);
         var decrpt = bytes.toString(cryptoJS.enc.Utf8);
-        if(event !== 0)
+        if(event !== undefined)
             event.sender.send('decrypted-data', decrpt);
         return decrpt;
     }
@@ -562,7 +561,7 @@ ipcMain.on('get-twi-keys', (event) => {
     fs.readFile(twitDataLoc, (err, data) => {
         if(err){throw err}
         else{
-            let da = decryptData(0, {value: data});
+            let da = decryptData(undefined, {value: data});
             let dat = JSON.parse(da);
             twitter = new twitterAPI({
                 consumerKey: dat.consumer_key,
@@ -575,6 +574,42 @@ ipcMain.on('get-twi-keys', (event) => {
     });
 });
 
+function getTwitData(event, arg) {
+    fs.readFile(twitDataLoc, (err, dat) => {
+        if (err) throw err;
+        else{
+            let decryptedDat = decryptData(undefined, {value: dat});
+            if(event != undefined){
+                event.sender.send( 'send-data-twit',  decryptedDat);
+            }
+            else if(arg.callback){
+                arg.callback(decryptedDat);
+            }
+
+            console.log('Loaded Twitter Data!');
+        }
+    });
+}
+ipcMain.on('get-data-twit', getTwitData);
+
+function setTwitData(event, arg) {
+    let dat = encryptData(undefined, {value: arg.config});
+    fs.writeFile(twitDataLoc, dat, (err) => {
+        if (err) throw err;
+        else{
+            console.log('Saved Twitter Data!');
+        }
+    });
+}
+ipcMain.on('set-data-twit', setTwitData);
+
+function resetTwitData(event, arg) {
+
+}
+ipcMain.on('reset-twit-data', resetTwitData);
+
+
+
 ipcMain.on('load-page', (event, arg) => {
     twitter.getRequestToken( (err, requestToken, requestTokenSecret, results) => {
         if(err){
@@ -582,7 +617,7 @@ ipcMain.on('load-page', (event, arg) => {
         }
         else{
             fs.readFile(twitDataLoc, (err, data) => {
-                let da = decryptData(0, {value: data});
+                let da = decryptData(undefined, {value: data});
                 let dat = JSON.parse(da);
                 dat.request_token = requestToken
                 dat.request_secret = requestTokenSecret
@@ -595,7 +630,7 @@ ipcMain.on('load-page', (event, arg) => {
                     });
                 });
                 dat = JSON.stringify(dat);
-                let dec = encryptData(0, {value: dat});
+                let dec = encryptData(undefined, {value: dat});
                 fs.writeFile(twitDataLoc, dec, (err) => {
                     if(err) throw err;
                     console.log('Updated Twitter Auth Data');
@@ -603,40 +638,41 @@ ipcMain.on('load-page', (event, arg) => {
             });
         }
     });
-    console.log('Loading a secure Login Page...');
-    child = new BrowserWindow({
-        parent: mainWindow,
-        modal: true,
-        show: false,
-        width: 710,
-        height: 530,
-        autoHideMenuBar: true,
-        alwaysOnTop: true
-    });
-    child.once('ready-to-show', () => {
-        mainWindow.setEnabled(false);
-        child.show();
-    });
+});
 
-    child.on('closed', () => {
-        mainWindow.setEnabled(true);
+ipcMain.on('get-access_token-twit', (event, arg) => {
+    console.log('yeet');
+    twitter.getRequestToken( (err, requestToken, requestTokenSecret, results) => {
+        if(err){
+            console.log('Error getting the OAuth request Token...');
+        }
+        else{
+            getTwitData(undefined, {callback: (data) => {
+                let dat = JSON.parse(data);
+                dat.request_token = requestToken
+                dat.request_secret = requestTokenSecret
+                console.log('I am sending the twitter config');
+                event.sender.send('send-access_token-twit', dat);
+                dat = JSON.stringify(dat);
+                let dec = encryptData(undefined, {value: dat});
+                // setTwitData(undefined, dec);
+            }});
+        }
     });
-    event.sender.send('finished-twit-auth', 'Secure Login Page Loaded...');
-    event.sender.send('back-to-home');
 });
 
 
 function getTwitAccessTokens(){
     fs.readFile(twitDataLoc, (err, data) => {
         if(err) throw err;
-        let dat = JSON.parse(decryptData(0, {value: data}));
+        let dat = JSON.parse(decryptData(undefined, {value: data}));
         twitter.getAccessToken(dat.request_token, dat.request_secret, dat.verifier, (err, accessToken, accessSecret, results) => {
             if(err) throw err;
             else{
                 dat.access_token = accessToken;
                 dat.access_secret = accessSecret;
                 dat = JSON.stringify(dat);
-                let dec = encryptData(0, {value: dat});
+                let dec = encryptData(undefined, {value: dat});
                 fs.writeFile(twitDataLoc, dec, (err) => {
                     if(err) throw err;
                     console.log('Saved twitter auth.');
@@ -650,7 +686,7 @@ function getTwitAccessTokens(){
 
 function twitVerify(event){
     fs.readFile(twitDataLoc, (err, data) => {
-        let dat = JSON.parse(decryptData(0, {value: data}));
+        let dat = JSON.parse(decryptData(undefined, {value: data}));
         twitter.verifyCredentials(dat.access_token, dat.access_secret, {}, function(err, data, response){
             if(err){
                 if(event) event.sender.send('twit-authed', false);
@@ -668,7 +704,7 @@ ipcMain.on('verify-twit-auth', twitVerify);
 
 function clearTwitterData(event){
     fs.readFile(initDataLoc, (err, data) => {
-        var jsn = JSON.parse(decryptData(0, {value: data}));
+        var jsn = JSON.parse(decryptData(undefined, {value: data}));
         var twitData = {
             consumer_key:     jsn.consumer_key,
             consumer_secret:  jsn.consumer_secret,
@@ -679,7 +715,7 @@ function clearTwitterData(event){
             access_secret:    ''
         }
         let dat = JSON.stringify(twitData);
-        let dec = encryptData(0, {value: dat});
+        let dec = encryptData(undefined, {value: dat});
         fs.writeFile(twitDataLoc, dec, (err) => {
             if (err) {
                 console.log(err);
@@ -695,7 +731,7 @@ function connectTwitter(){
     fs.readFile(twitDataLoc, (err, data) => {
         if(err) throw err;
         else{
-            let dat = JSON.parse(decryptData(0, {value: data}));
+            let dat = JSON.parse(decryptData(undefined, {value: data}));
             T = new twit({
                 consumer_key:         dat.consumer_key,
                 consumer_secret:      dat.consumer_secret,
@@ -736,7 +772,7 @@ function getTwchCfg(event, arg){
     fs.readFile(twchDataLoc, (err, dat) => {
         if (err) throw err;
         else{
-            let decryptedDat = decryptData(0, {value: dat});
+            let decryptedDat = decryptData(undefined, {value: dat});
             if(event != 0){
                 event.sender.send( 'loaded-data-twch',  decryptedDat);
             }
@@ -748,10 +784,10 @@ function getTwchCfg(event, arg){
         }
     });
 }
-ipcMain.on('get-twch-data', getTwchCfg);
+ipcMain.on('get-data-twch', getTwchCfg);
 
 function saveTwchCfg(event, arg){
-    let dat = encryptData(0, {value: arg.config});
+    let dat = encryptData(undefined, {value: arg.config});
     fs.writeFile(twchDataLoc, dat, (err) => {
         if (err) throw err;
         else{
@@ -759,7 +795,7 @@ function saveTwchCfg(event, arg){
         }
     });
 }
-ipcMain.on('save-twch-data', saveTwchCfg);
+ipcMain.on('save-data-twch', saveTwchCfg);
 
 /**
  * Checks for a dat file for twitch. If there is none found, it will create it.
@@ -775,7 +811,7 @@ function mkTwchCfg(){
                 code: '',
                 accessToken: ''
             };
-            let dat = encryptData(0, {value: twchcfg});
+            let dat = encryptData(undefined, {value: twchcfg});
             fs.writeFile(twchDataLoc, dat, (err) => {
                 if (err) throw err;
                 else{
@@ -804,7 +840,7 @@ function storeTwitchCode(code){
 
 // FOR DISCORD -----------------------------------------------------------------
 ipcMain.on('save-data-dis', (event, arg) => {
-    let dat = encryptData(0, {value: arg});
+    let dat = encryptData(undefined, {value: arg});
     fs.writeFile(disDataLoc, dat, (err) => {
         if (err) {
              event.sender.send('saved-data-dis', {error: err});
@@ -819,7 +855,7 @@ ipcMain.on('load-data-dis', (event, arg) => {
     fs.readFile(disDataLoc, (err, dat) => {
         if (err) throw err;
         else{
-            event.sender.send( 'loaded-data-dis', decryptData(0, {value: dat}) );
+            event.sender.send( 'loaded-data-dis', decryptData(undefined, {value: dat}) );
             console.log('Loaded Discord Data!');
         }
     });

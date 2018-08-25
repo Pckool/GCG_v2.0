@@ -49,10 +49,10 @@ function twitchLogin(){
 }
 
 function getTwitchConfig(callback){
-    
+
 }
 
 app.controller('twitchSettingsController', function($scope) {
     console.log('We are in twitch settings');
-    $('#gen-oauth').click(getTwitchAuth);
+    $('#gen-oauth-twch').click(getTwitchAuth);
 });
