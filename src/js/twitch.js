@@ -1,12 +1,12 @@
 var TwitchJS = require('twitch-js');
 var twitchOptions = {
     options: {
-        clientId: 'aqj40giuob8eeeed61a01ath7dn9f2',
+        clientId: '03ppab2gojuahyr7ouocpnbclbhof7',
     },
     channels: ['someUserName']
 }
 var twitchConfig = {
-    client_id: 'aqj40giuob8eeeed61a01ath7dn9f2',
+    client_id: '03ppab2gojuahyr7ouocpnbclbhof7',
     redirect_uri: 'http://localhost:8888/twitch-passport',
     response_type: 'code',
     scope: 'channel_subscriptions channel_check_subscription'
@@ -30,7 +30,7 @@ function getTwitchAuth(){
         });
     }
     console.log('I got here!');
-    ipcRenderer_dis.send('open-browser2', {url: `https://api.twitch.tv/kraken/oauth2/authenticate?client_id=${twitchConfig.client_id}&redirect_uri=${twitchConfig.redirect_uri}&response_type=${twitchConfig.response_type}&scope=${twitchConfig.scope}`});
+    ipcRenderer_dis.send('open-browser2', {url: `https://api.twitch.tv/kraken/oauth2/authenticate?client_id=${twitchConfig.client_id}&redirect_uri=${twitchConfig.redirect_uri}&response_type=${twitchConfig.response_type}&scope=${twitchConfig.scope}&force_verify=true`});
 }
 
 function twitchLogin(){
@@ -48,8 +48,14 @@ function twitchLogin(){
     });
 }
 
-function getTwitchConfig(callback){
-
+function getTwitchConfig(){
+    ipcRenderer.send('get-data-twch');
+    ipcRenderer.once('loaded-data-twch', (event, data) => {
+        console.log(JSON.parse(data));
+    });
+}
+function resetTwitchConfig(){
+    ipcRenderer.send('reset-data-twch');    // Reset Twitch
 }
 
 app.controller('twitchSettingsController', function($scope) {

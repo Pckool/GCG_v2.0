@@ -79,6 +79,7 @@
         "oauth": "^0.9.15",
         "query-string": "^6.1.0",
         "squirrel": "^1.0.0",
+        "superagent": "^3.8.3",
         "tmi.js": "^1.2.1",
         "twit": "^2.2.10",
         "twitch-js": "^1.2.14",

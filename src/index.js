@@ -3,6 +3,7 @@ require('electron-debug')();
 //require('electron-reload')(__dirname);
 var http = require('http');
 var fs = require('fs');
+var request = require('superagent');
 var jsdom = require('jsdom');
 var {JSDOM} = jsdom;
 var url = require('url');
@@ -307,7 +308,7 @@ const newWebView = (event, arg) => {
         const document = dom.window.document;
         const bodyEl = document.body; // implicitly created
         bodyEl.innerHTML = `<webview id="webview" src="${arg.url}"></webview>`;
-        console.log(dom.serialize());
+        // console.log(dom.serialize());
         fs.writeFile(`${__dirname}/webview.html`, dom.serialize(), (err) => {
             if(err){
                 throw err;
@@ -413,20 +414,6 @@ function handleRequest(req, res) {
 
     // if the request if for discord auth
     if(req.url.includes('/discord') ){
-        // This is for a request to open a new browser!
-        // if(req.url.includes('/open_browser') && indexOfQuery >= 0){
-        //     if(!req.url.includes('/wurl')){
-        //         console.log('Got a request to open a browser with this query: ' + req.url.substr(indexOfQuery) );
-        //         bLauncher('http://discordapp.com/api/oauth2/authorize'+ req.url.substr(indexOfQuery), {browser: ["chrome", "firefox"]}, (e, browser) => {
-        //             if(e) return console.log(e);
-        //             browser.once('stop', function(code){
-        //                 console.log( 'Browser closed with exit code:', code );
-        //             });
-        //         });
-        //     }
-        //     else{
-        //     }
-        // }
 
         if(req.url.includes('/success_') ){
             console.log('query: ' + req.url.substr(indexOfQuery));
@@ -464,9 +451,13 @@ function handleRequest(req, res) {
             }
         }
         if(req.url.includes('-passport')){
-            let dat = queryString.parse(req.url.substr(indexOfQuery));
-            console.log(dat);
-            storeTwitchCode(dat);
+            console.log('BEING SENT SOMETHING FOR TWITCH PASSPORT');
+            let queryObject = queryString.parse(req.url.substr(indexOfQuery));
+            // console.log("in server function: " + JSON.stringify(dat));
+            if(queryObject.code){
+                storeTwitchCode( queryObject.code );
+            }
+
 
             if(browser){
                 browser.close();
@@ -608,46 +599,13 @@ function resetTwitData(event, arg) {
 }
 ipcMain.on('reset-twit-data', resetTwitData);
 
-
-
-ipcMain.on('load-page', (event, arg) => {
-    twitter.getRequestToken( (err, requestToken, requestTokenSecret, results) => {
-        if(err){
-            console.log('Error getting the OAuth request Token...');
-        }
-        else{
-            fs.readFile(twitDataLoc, (err, data) => {
-                let da = decryptData(undefined, {value: data});
-                let dat = JSON.parse(da);
-                dat.request_token = requestToken
-                dat.request_secret = requestTokenSecret
-                bLauncher('https://twitter.com/oauth/authenticate?oauth_token=' + requestToken, {browser: ["chrome", "firefox"]}, function(e, browser){
-                    if(e){
-                        return console.log(e);
-                    }
-                    browser.on('stop', function(code){
-                        console.log( 'Browser closed with exit code:', code );
-                    });
-                });
-                dat = JSON.stringify(dat);
-                let dec = encryptData(undefined, {value: dat});
-                fs.writeFile(twitDataLoc, dec, (err) => {
-                    if(err) throw err;
-                    console.log('Updated Twitter Auth Data');
-                });
-            });
-        }
-    });
-});
-
 ipcMain.on('get-access_token-twit', (event, arg) => {
-    console.log('yeet');
     twitter.getRequestToken( (err, requestToken, requestTokenSecret, results) => {
         if(err){
             console.log('Error getting the OAuth request Token...');
         }
         else{
-            getTwitData(undefined, {callback: (data) => {
+            getTwitData(undefined, {callback : (data) => {
                 let dat = JSON.parse(data);
                 dat.request_token = requestToken
                 dat.request_secret = requestTokenSecret
@@ -655,7 +613,7 @@ ipcMain.on('get-access_token-twit', (event, arg) => {
                 event.sender.send('send-access_token-twit', dat);
                 dat = JSON.stringify(dat);
                 let dec = encryptData(undefined, {value: dat});
-                // setTwitData(undefined, dec);
+                setTwitData(undefined, {config: dec});
             }});
         }
     });
@@ -693,7 +651,7 @@ function twitVerify(event){
                 console.log('Error while verifying twitter credentials: ' + err.stack);
             }
             else{
-                console.log('Connected to Twitter account: ' + data['screen_name']);
+
                 connectTwitter();
                 if(event) event.sender.send('twit-authed', true);
             }
@@ -768,12 +726,12 @@ function twitterPost(event, postStatus){
 ipcMain.on('twitter-post', twitterPost);
 
 // FOR TWITCH.TV ---------------------------------------------------------------
-function getTwchCfg(event, arg){
+function getTwitchCfg(event, arg){
     fs.readFile(twchDataLoc, (err, dat) => {
         if (err) throw err;
         else{
             let decryptedDat = decryptData(undefined, {value: dat});
-            if(event != 0){
+            if(event != undefined){
                 event.sender.send( 'loaded-data-twch',  decryptedDat);
             }
             if(arg.callback){
@@ -784,18 +742,21 @@ function getTwchCfg(event, arg){
         }
     });
 }
-ipcMain.on('get-data-twch', getTwchCfg);
+ipcMain.on('get-data-twch', getTwitchCfg);
 
-function saveTwchCfg(event, arg){
+function saveTwitchCfg(event, arg){
     let dat = encryptData(undefined, {value: arg.config});
     fs.writeFile(twchDataLoc, dat, (err) => {
         if (err) throw err;
         else{
             console.log('Saved Twitch Data!');
+            if(arg.callback){
+                arg.callback();
+            }
         }
     });
 }
-ipcMain.on('save-data-twch', saveTwchCfg);
+ipcMain.on('save-data-twch', saveTwitchCfg);
 
 /**
  * Checks for a dat file for twitch. If there is none found, it will create it.
@@ -805,13 +766,15 @@ function mkTwchCfg(){
     fs.access(twchDataLoc, fs.constants.F_OK, (err) => {
         if(err){
             let twchcfg = {
-                clientId: 'aqj40giuob8eeeed61a01ath7dn9f2',
-                clientSecret: '',
+                client_id: '03ppab2gojuahyr7ouocpnbclbhof7',
+                client_secret: 'b0i83zo2okxjfscgqxyfr4kagm4ad2',
                 scopes: 'channel_subscriptions channel_check_subscription',
                 code: '',
-                accessToken: ''
+                authorization_code: ''
             };
-            let dat = encryptData(undefined, {value: twchcfg});
+            let dat = encryptData(undefined, {
+                value: JSON.stringify(twchcfg)
+            });
             fs.writeFile(twchDataLoc, dat, (err) => {
                 if (err) throw err;
                 else{
@@ -823,16 +786,121 @@ function mkTwchCfg(){
             console.log('twitch data file found!');
         }
     });
+}
+ipcMain.on('make-data-twch', mkTwchCfg);
 
+/**
+ * overwites the twitch cfg file
+ * @return {None}
+ */
+function resetTwchCfg(){
+    fs.access(twchDataLoc, fs.constants.F_OK, (err) => {
+        if(err){
+            console.log('No twitch data file found! creating it now...');
+            mkTwchCfg();
+        }
+        else{
+            let twchcfg = {
+                client_id: '03ppab2gojuahyr7ouocpnbclbhof7',
+                client_secret: 'b0i83zo2okxjfscgqxyfr4kagm4ad2',
+                scopes: 'channel_subscriptions channel_check_subscription',
+                code: '',
+                authorization_code: ''
+            };
+            console.log('What I\'m sending to encrypt: ' + twchcfg);
+            let dat = encryptData(undefined, {
+                value: JSON.stringify(twchcfg)
+            });
+            fs.writeFile(twchDataLoc, dat, (err) => {
+                if (err) throw err;
+                else{
+                    console.log('Created Twitch Data file!');
+                }
+            });
+        }
+    });
+}
+ipcMain.on('reset-data-twch', resetTwchCfg);
+
+
+function getTwitchToken(){
+    getTwitchCfg(undefined, {
+        callback: (dat) => {
+            let parsedDat = JSON.parse(dat);
+            console.log(parsedDat);
+
+            request.post('https://id.twitch.tv/oauth2/token')
+            .query({
+                client_id: parsedDat.client_id,
+                client_secret: parsedDat.client_secret,
+                code: parsedDat.code,
+                grant_type: 'authorization_code',
+                redirect_uri: 'http://localhost:8888/twitch-passport'
+            })
+            .end( (err, res) => {
+                if(err){
+                    console.log(err);
+                }
+                else {
+                    console.log(res.body);
+                    parsedDat.access_token = res.body.access_token;
+                    parsedDat.refresh_token = res.body.refresh_token;
+                    parsedDat.expires_in = res.body.expires_in;
+                    saveTwitchCfg(undefined, {
+                        config: JSON.stringify(parsedDat)
+                    });
+                }
+
+            });
+        }
+    });
+}
+
+function refreshTwitchToken(){
+    getTwitchCfg(undefined, {
+        callback: (dat) => {
+            console.log(dat);
+            let parsedDat = JSON.parse(dat);
+            request.get('https://id.twitch.tv/oauth2/token')
+            .query({
+                grant_type: 'refresh_token',
+                client_id: parsedDat.client_id,
+                client_secret: parsedDat.client_secret,
+                refresh_token: 'authorization_code',
+            })
+            .end( (err, res) => {
+                if(err){
+                    console.log(err);
+                }
+                else{
+                    console.log(res);
+                    parsedDat.access_token = res.access_token;
+                    parsedDat.refresh_token = res.refresh_token;
+                    saveTwitchCfg(undefined, {
+                        config: JSON.stringify(parsedDat)
+                    });
+                }
+            });
+        }
+    });
 }
 
 
 function storeTwitchCode(code){
-    getTwchCfg(0, {callback: (dat) => {
-        let parsedDat = JSON.parse(dat);
-        parsedDat.code = code;
-        saveTwchCfg(0, {config: parsedDat});
-    }});
+    getTwitchCfg(undefined, {
+        callback: (dat) => {
+            console.log(dat);
+            let parsedDat = JSON.parse(dat);
+            parsedDat.code = code;
+            saveTwitchCfg(0, {
+                config: JSON.stringify(parsedDat),
+                callback: () => {
+                    // Try to get the token after saving
+                    getTwitchToken();
+                }
+            });
+        }
+    });
 }
 
 

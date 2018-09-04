@@ -1,3 +1,3 @@
-window.onclose(()=>{
+window.onclose = () => {
     document.querySelector('webview').clearHistory();
-});
+}

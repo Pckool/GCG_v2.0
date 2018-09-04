@@ -119,10 +119,13 @@ function resetConfig(){
     xb1Location = '';
 
     // saveLocations(); //#################################################
-    ipcRenderer.send('clearTwitterAuth');
+
+    //resetTwitchConfig();
+    ipcRenderer.send('clearTwitterAuth');    // Reset Twitter
     resetDiscordConfig();
 
-    // ipcRenderer.send('verify-twit-auth');
+    resetTwitchConfig();
+
     window.location = '#/!';
     notify('Data Reset');
 }
