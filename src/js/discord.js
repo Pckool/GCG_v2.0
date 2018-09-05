@@ -351,18 +351,6 @@ app.controller('discordSettingsController', function($scope) {
     $('#server_connect').click(function() {
         console.log('the URl has been changed. Opening the browser...');
         ipcRenderer_dis.send('open-browser2', {url: `http://discordapp.com/api/oauth2/authorize?client_id=${$('#client_id').val()}&permissions=8&scope=bot`});
-    	// $.ajax({
-    	// 	url: 'http://localhost:8888/open_browser/discordauth',
-    	// 	type: 'GET',
-    	// 	data: {
-        //         client_id: $('#client_id').val(),
-        //         permissions: "8",
-        //         scope: "bot"
-    	// 	},
-    	// 	success: function(msg) {
-    	// 		alert('Email Sent');
-    	// 	}
-    	// });
     });
 
 
@@ -466,7 +454,7 @@ function pcCodeGrab_single(callback){
                 if(err){throw err;return;}
                 else{
                     if (counter <= 1){
-                        console.log('Code ' + counter + ': ' + ln)
+                        console.log('Code ' + counter + ': ' + ln);
                         codez += ln;
                         counter++;
                     }
@@ -477,7 +465,7 @@ function pcCodeGrab_single(callback){
 
             });
             jetpack.write(config.pc, newList.trim());
-            counter = 0;
+            counter = 1;
             if(callback){
                 callback(codez.trim());
             }
@@ -512,7 +500,7 @@ function ps4CodeGrab_single(callback){
 
             });
             jetpack.write(config.ps4, newList.trim());
-            counter = 0;
+            counter = 1;
             if(callback){
                 callback(codez.trim());
             }
@@ -546,7 +534,7 @@ function xb1CodeGrab_single(callback){
             });
             console.log(codez);
             jetpack.write(config.xb1, newList.trim());
-            counter = 0;
+            counter = 1;
             if(callback){
                 callback(codez.trim());
             }

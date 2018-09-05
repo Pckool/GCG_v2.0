@@ -74,6 +74,7 @@
         "launch-browser": "^1.0.0",
         "less": "^3.8.1",
         "mime": "^2.3.1",
+        "node-minify": "^3.4.0",
         "node-twitter-api": "^1.8.0",
         "node-twitter-signin": "0.0.5",
         "oauth": "^0.9.15",

@@ -16,6 +16,9 @@ const twitterAPI = require('node-twitter-api');    // Twitter Authenticator
 var twit = require('twit');                        // Twitter Interface
 const cryptoJS = require('crypto-js');             // For cyphers
 
+const readline = require('readline');
+const {google} = require('googleapis');
+
 var T;                                             // The Twitter Bot
 var coreSettingsLoc = `${__dirname}/bin/loc.dat`;
 var twitDataLoc = `${__dirname}/bin/tw.dat`;       // Directory of the twitter data file
@@ -182,7 +185,7 @@ const createWindow = () => {
 
 		});
 	});
-    mkTwchCfg();
+    mkTwitchCfg();
 };
 
 // This method will be called when Electron has finished
@@ -466,6 +469,23 @@ function handleRequest(req, res) {
         }
     }
 
+    // if the request is for Google Sheets
+    else if(req.url.includes('/sheets')){
+
+        // This is for a request to open a new browser!
+        if(req.url.includes('-passport')){
+            console.log('BEING SENT SOMETHING FOR GSHEETS PASSPORT');
+            let queryObject = queryString.parse(req.url.substr(indexOfQuery));
+            // console.log("in server function: " + JSON.stringify(dat));
+            if(queryObject){
+                console.log(queryObject);
+            }
+            if(browser){
+                browser.close();
+            }
+
+        }
+    }
     /**
      * // NOTE: Try to change this function/if blck so that it can recieve the domain+path within the query
      */
@@ -544,41 +564,54 @@ function decryptData(event, arg){
 }
 ipcMain.on('decrypt-data', decryptData);
 
+function getEncryptedData(location, callback){
+    fs.readFile(location, (err, dat) => {
+        if (err) throw err;
+        else{
+            let decryptedDat = decryptData(undefined, {value: dat});
+            if(callback){callback(decryptedDat);}
+        }
+    });
+}
+function setEncryptedData(data, location, callback){
+    let encryptedDat = encryptData(undefined, {value: data});
+    fs.writeFile(location, encryptedDat, (err) => {
+        if (err) {
+            callback(err);
+            throw err;
+        }
+        else{
+            if(callback){callback();}
+        }
+    });
+}
+
 
 // Twitter API data ------------------------------------------------------------ Twitter API data
 var twitter;
 
 ipcMain.on('get-twi-keys', (event) => {
-    fs.readFile(twitDataLoc, (err, data) => {
-        if(err){throw err}
-        else{
-            let da = decryptData(undefined, {value: data});
-            let dat = JSON.parse(da);
-            twitter = new twitterAPI({
-                consumerKey: dat.consumer_key,
-                consumerSecret: dat.consumer_secret,
-                callback: 'http://localhost:8888'
-            });
-        	console.log('Twitter Bot Primed.');
-        }
-
+    getEncryptedData(twitDataLoc, (dat) => {
+        let parsedDat = JSON.parse(dat);
+        twitter = new twitterAPI({
+            consumerKey: parsedDat.consumer_key,
+            consumerSecret: parsedDat.consumer_secret,
+            callback: 'http://localhost:8888'
+        });
+        console.log('Twitter Bot Primed.');
     });
 });
 
 function getTwitData(event, arg) {
-    fs.readFile(twitDataLoc, (err, dat) => {
-        if (err) throw err;
-        else{
-            let decryptedDat = decryptData(undefined, {value: dat});
-            if(event != undefined){
-                event.sender.send( 'send-data-twit',  decryptedDat);
-            }
-            else if(arg.callback){
-                arg.callback(decryptedDat);
-            }
-
-            console.log('Loaded Twitter Data!');
+    getEncryptedData(twitDataLoc, (decryptedDat) => {
+        if(event != undefined){
+            event.sender.send( 'send-data-twit',  decryptedDat);
         }
+        else if(arg.callback){
+            arg.callback(decryptedDat);
+        }
+
+        console.log('Loaded Twitter Data!');
     });
 }
 ipcMain.on('get-data-twit', getTwitData);
@@ -727,33 +760,39 @@ ipcMain.on('twitter-post', twitterPost);
 
 // FOR TWITCH.TV ---------------------------------------------------------------
 function getTwitchCfg(event, arg){
-    fs.readFile(twchDataLoc, (err, dat) => {
-        if (err) throw err;
-        else{
-            let decryptedDat = decryptData(undefined, {value: dat});
-            if(event != undefined){
-                event.sender.send( 'loaded-data-twch',  decryptedDat);
-            }
-            if(arg.callback){
-                arg.callback(decryptedDat);
-            }
-
-            console.log('Loaded Twitch Data!');
+    getEncryptedData(twchDataLoc, (dat) => {
+        if(event != undefined){
+            event.sender.send( 'loaded-data-twch',  decryptedDat);
         }
+        if(arg.callback){
+            arg.callback(decryptedDat);
+        }
+
+        console.log('Loaded Twitch Data!');
     });
 }
 ipcMain.on('get-data-twch', getTwitchCfg);
 
+/**
+ * PLEASE SEND A STRING in the config variable in the arg object.
+ * @param  {EventObject} event Used with IPC. please set this to 'undefined' if you are using this as only a function
+ * @param  {Object} arg   Looks for 'config' and 'callback'
+ * @return {None}       [description]
+ */
 function saveTwitchCfg(event, arg){
-    let dat = encryptData(undefined, {value: arg.config});
-    fs.writeFile(twchDataLoc, dat, (err) => {
-        if (err) throw err;
+    setEncryptedData(arg.config, twchDataLoc, (err)=>{
+        if(err){
+
+        }
         else{
-            console.log('Saved Twitch Data!');
             if(arg.callback){
-                arg.callback();
+                arg.callback('Saved Twitch Data!');
+            }
+            else{
+                console.log('Saved Twitch Data!');
             }
         }
+
     });
 }
 ipcMain.on('save-data-twch', saveTwitchCfg);
@@ -762,7 +801,7 @@ ipcMain.on('save-data-twch', saveTwitchCfg);
  * Checks for a dat file for twitch. If there is none found, it will create it.
  * @return {None}
  */
-function mkTwchCfg(){
+function mkTwitchCfg(){
     fs.access(twchDataLoc, fs.constants.F_OK, (err) => {
         if(err){
             let twchcfg = {
@@ -772,13 +811,10 @@ function mkTwchCfg(){
                 code: '',
                 authorization_code: ''
             };
-            let dat = encryptData(undefined, {
-                value: JSON.stringify(twchcfg)
-            });
-            fs.writeFile(twchDataLoc, dat, (err) => {
-                if (err) throw err;
-                else{
-                    console.log('Created Twitch Data file!');
+            saveTwitchCfg(undefined, {
+                config: JSON.stringify(twchcfg),
+                callback: (result) => {
+                    console.log('Created the Twitch config.');
                 }
             });
         }
@@ -787,17 +823,17 @@ function mkTwchCfg(){
         }
     });
 }
-ipcMain.on('make-data-twch', mkTwchCfg);
+ipcMain.on('make-data-twch', mkTwitchCfg);
 
 /**
  * overwites the twitch cfg file
  * @return {None}
  */
-function resetTwchCfg(){
+function resetTwitchCfg(){
     fs.access(twchDataLoc, fs.constants.F_OK, (err) => {
         if(err){
             console.log('No twitch data file found! creating it now...');
-            mkTwchCfg();
+            mkTwitchCfg();
         }
         else{
             let twchcfg = {
@@ -820,7 +856,7 @@ function resetTwchCfg(){
         }
     });
 }
-ipcMain.on('reset-data-twch', resetTwchCfg);
+ipcMain.on('reset-data-twch', resetTwitchCfg);
 
 
 function getTwitchToken(){
@@ -873,9 +909,9 @@ function refreshTwitchToken(){
                     console.log(err);
                 }
                 else{
-                    console.log(res);
-                    parsedDat.access_token = res.access_token;
-                    parsedDat.refresh_token = res.refresh_token;
+                    parsedDat.access_token = res.body.access_token;
+                    parsedDat.refresh_token = res.body.refresh_token;
+                    parsedDat.expires_in = res.body.expires_in;
                     saveTwitchCfg(undefined, {
                         config: JSON.stringify(parsedDat)
                     });
@@ -908,10 +944,9 @@ function storeTwitchCode(code){
 
 // FOR DISCORD -----------------------------------------------------------------
 ipcMain.on('save-data-dis', (event, arg) => {
-    let dat = encryptData(undefined, {value: arg});
-    fs.writeFile(disDataLoc, dat, (err) => {
-        if (err) {
-             event.sender.send('saved-data-dis', {error: err});
+    setEncryptedData(arg, disDataLoc, (err) => {
+        if(err){
+            event.sender.send('saved-data-dis', {error: err});
         }
         else{
             console.log('Saved Discord Data!');
@@ -920,23 +955,104 @@ ipcMain.on('save-data-dis', (event, arg) => {
     });
 });
 ipcMain.on('load-data-dis', (event, arg) => {
-    fs.readFile(disDataLoc, (err, dat) => {
-        if (err) throw err;
-        else{
-            event.sender.send( 'loaded-data-dis', decryptData(undefined, {value: dat}) );
-            console.log('Loaded Discord Data!');
-        }
+    getEncryptedData(disDataLoc, (dat) => {
+        event.sender.send( 'loaded-data-dis', dat);
+        console.log('Loaded Discord Data!');
     });
 });
 
 
-// FOR WEB BROWSER OPENING -----------------------------------------------------
+// FOR Sheets API -----------------------------------------------------
 
-ipcMain.on('open-browser', (event, arg) => {
-    bLauncher(arg.url, {browser: ["chrome", "firefox"]}, function(e, browser) {
-        if(e) return console.log(e);
-        browser.on('stop', function(code){
-            console.log('Browser closed with the exit code: ' + code)
-        });
-    });
+
+// If modifying these scopes, delete token.json.
+const SCOPES = ['https://www.googleapis.com/auth/spreadsheets.readonly'];
+const TOKEN_PATH = 'src/bin/token.json';
+
+// Load client secrets from a local file.
+fs.readFile('src/lib/credentials.json', (err, content) => {
+	if (err) return console.log('Error loading client secret file:', err);
+	// Authorize a client with credentials, then call the Google Sheets API.
+	authorize(JSON.parse(content), listMajors);
 });
+
+/**
+ * Create an OAuth2 client with the given credentials, and then execute the
+ * given callback function.
+ * @param {Object} credentials The authorization client credentials.
+ * @param {function} callback The callback to call with the authorized client.
+ */
+function authorize(credentials, callback) {
+	const {client_secret,client_id,redirect_uris} = credentials.installed;
+	const oAuth2Client = new google.auth.OAuth2(client_id, client_secret, redirect_uris[0]);
+
+	// Check if we have previously stored a token.
+	fs.readFile(TOKEN_PATH, (err, token) => {
+		if (err) return getSheetsToken(oAuth2Client, callback);
+		oAuth2Client.setCredentials(JSON.parse(token));
+		callback(oAuth2Client);
+	});
+}
+
+/**
+ * Get and store new token after prompting for user authorization, and then
+ * execute the given callback with the authorized OAuth2 client.
+ * @param {google.auth.OAuth2} oAuth2Client The OAuth2 client to get token for.
+ * @param {getEventsCallback} callback The callback for the authorized client.
+ */
+function getSheetsToken(oAuth2Client, callback) {
+	const authUrl = oAuth2Client.generateAuthUrl({
+		access_type: 'offline',
+		scope: SCOPES,
+	});
+	console.log('Authorize this app by visiting this url:', authUrl);
+    newWebView(undefined, {
+        url: authUrl,
+    });
+
+	const rl = readline.createInterface({
+		input: process.stdin,
+		output: process.stdout,
+	});
+	rl.question('Enter the code from that page here: ', (code) => {
+		rl.close();
+		oAuth2Client.getToken(code, (err, token) => {
+			if (err) return console.error('Error while trying to retrieve access token', err);
+			oAuth2Client.setCredentials(token);
+			// Store the token to disk for later program executions
+			fs.writeFile(TOKEN_PATH, JSON.stringify(token), (err) => {
+				if (err) console.error(err);
+				console.log('Token stored to', TOKEN_PATH);
+			});
+			callback(oAuth2Client);
+		});
+	});
+}
+
+/**
+ * Prints the names and majors of students in a sample spreadsheet:
+ * @see https://docs.google.com/spreadsheets/d/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms/edit
+ * @param {google.auth.OAuth2} auth The authenticated Google OAuth client.
+ */
+function listMajors(auth) {
+	const sheets = google.sheets({
+		version: 'v4',
+		auth
+	});
+	sheets.spreadsheets.values.get({
+		spreadsheetId: '1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms',
+		range: 'Class Data!A2:E',
+	}, (err, res) => {
+		if (err) return console.log('The API returned an error: ' + err);
+		const rows = res.data.values;
+		if (rows.length) {
+			console.log('Name, Major:');
+			// Print columns A and E, which correspond to indices 0 and 4.
+			rows.map((row) => {
+				console.log(`${row[0]}, ${row[4]}`);
+			});
+		} else {
+			console.log('No data found.');
+		}
+	});
+}
