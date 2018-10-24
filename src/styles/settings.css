@@ -20,3 +20,25 @@
 .donateButton{
     height: 15px;
 }
+.reg-list{
+    overflow-y: auto;
+    height: 100%;
+    min-height: 100%;
+    max-height: 100%;
+}
+.reg-list-item{
+    justify-content: space-around;
+    margin-bottom: 1em;
+    margin-right: 1em;
+    margin-left: 1em;
+    background-color: #2c313c;
+    border-radius: 1em;
+
+}
+.reg-list-var{
+    margin: 0.5em 0;
+}
+.settings-card{
+    overflow-y: auto;
+    flex-grow: 1;
+}

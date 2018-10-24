@@ -1,0 +1,48 @@
+<div class="sub-cont toggle">
+    <div class="top-bar" id="top-bar">
+        <a class="back-icon far fa-arrow-alt-circle-left fa-lg" href="#!settings"></a>
+        <a class="x-icon far fa-times-circle fa-lg" href="#/!"></a>
+    </div>
+
+    <div class="main-card">
+        <div class="twitch-options flex-column">
+            <div class="flex-row">
+                <div class="flex-column flex-grow1">
+                    <label for="user">Sheets ID*</label>
+                    <input type="text" id="gsheets-id" class="input-box" name="user" value="" ng-model="gsheets_id" ng-change="" required/>
+                </div>
+            </div>
+
+            <div class="spacer"></div>
+
+            <div class="flex-row">
+                <div class="flex-column flex-grow1">
+                    <label for="user">PC Table Name*</label>
+                    <input type="text" id="gsheets-table-pc" class="input-box flex-grow1" name="user" value="" ng-model="gsheets_table_pc" ng-change=""/>
+                </div>
+            </div>
+
+            <div class="flex-row">
+                <div class="flex-column flex-grow1">
+                    <label for="user">PS4 Table Name*</label>
+                    <input type="text" id="gsheets-table-ps4" class="input-box flex-grow1" name="user" value="" ng-model="gsheets_table_ps4" ng-change=""/>
+                </div>
+            </div>
+            
+            <div class="flex-row">
+                <div class="flex-column flex-grow1">
+                    <label for="user">XB1 Table Name*</label>
+                    <input type="text" id="gsheets-table-xb1" class="input-box flex-grow1" name="user" value="" ng-model="gsheets_table_xb1" ng-change=""/>
+                </div>
+            </div>
+
+            <div class="spacer"></div>
+
+            <div class="flex-row flex-end">
+                <button id="gsheets-auth" class="btn-main btn-color-gold flex-grow1" name="gsheets-auth" ng-click="gsheetsAuth()">Authenticate Google Sheets</button>
+                <button id="gsheets-extract" class="btn-main btn-color-green flex-grow1" name="gsheets-extract" ng-click="gsheetsExtract()">Pull Codes</button>
+            </div>
+
+        </div>
+    </div>
+</div>

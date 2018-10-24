@@ -347,6 +347,9 @@ app.controller('discordSettingsController', function($scope) {
     // for the server connect button
     $scope.client_id_in = checkVal;
     $scope.token_in = checkConnectBtns;
+    $scope.createBot = function(){
+        ipcRenderer_dis.send('open-browser2', {url: `https://discordapp.com/developers/applications`});
+    }
 
     $('#server_connect').click(function() {
         console.log('the URl has been changed. Opening the browser...');
@@ -443,109 +446,45 @@ function checkConnectBtns(){
 }
 
 function pcCodeGrab_single(callback){
-    console.log('pc: ' + config.pc);
-    var codez = '';
-    var newList = '';
-    if(config.pc){
-        fs.readFile(config.pc, (err, text) => {
-            if(err) throw err;
-            var counter = 1;
-            text.toString().split('\n').forEach( (ln) => {
-                if(err){throw err;return;}
-                else{
-                    if (counter <= 1){
-                        console.log('Code ' + counter + ': ' + ln);
-                        codez += ln;
-                        counter++;
-                    }
-                    else if (counter > 1){
-                        newList += ln + "\n";
-                    }
-                }
-
-            });
-            jetpack.write(config.pc, newList.trim());
-            counter = 1;
-            if(callback){
-                callback(codez.trim());
-            }
-        });
-    }
-    else{
-        dialog.showErrorBox('No File Location Chosen!', 'You did not choose ' +
-        'a PC Location! Please choose a location before trying to grab codes!');
-        return '';
-    }
+    ipcRenderer.send('grab-code',{
+        "platform": "pc",
+        "numCodes": 1
+    });
+    ipcRenderer.once('grabbed-codes', (event, codes) => {
+        if(callback){
+            callback(codes.codes);
+            notify('A discord user redeemed a code.')
+        }
+    });
 }
 
 function ps4CodeGrab_single(callback){
-    var codez = '';
-    var newList = '';
-    if(config.ps4){
-        fs.readFile(config.ps4, function(err, text){
-            if(err) throw err;
-            var counter = 1;
-            text.toString().split('\n').forEach(function(ln){
-                if(err){throw err;return;}
-                else{
-                    if (counter <= 1){
-                        console.log('Code ' + counter + ': ' + ln)
-                        codez += ln;
-                        counter++;
-                    }
-                    else if (counter > 1){
-                        newList += ln + "\n";
-                    }
-                }
-
-            });
-            jetpack.write(config.ps4, newList.trim());
-            counter = 1;
-            if(callback){
-                callback(codez.trim());
-            }
-        });
-    }
-    else{
-        dialog.showErrorBox('No File Location Chosen!', 'You did not choose a PS4 ONE Location! Please choose a location before trying to grab codes!');
-        return '';
-    }
+    ipcRenderer.send('grab-code',{
+        "platform": "ps4",
+        "numCodes": 1
+    });
+    ipcRenderer.once('grabbed-codes', (event, codes) => {
+        if(callback){
+            callback(codes.codes);
+            notify('A discord user redeemed a code.')
+        }
+    });
 }
 
 function xb1CodeGrab_single(callback){
-    var codez = '';
-    var newList = '';
-    if(config.xb1){
-        fs.readFile(config.xb1, function(err, text){
-            if(err) throw err;
-            var counter = 1;
-            text.toString().split('\n').forEach(function(ln){
-                if(err){throw err;return;}
-                else{
-                    if (counter <= 1){
-                        console.log('Code ' + counter + ': ' + ln)
-                        codez += ln;
-                        counter++;
-                    }
-                    else if (counter > 1){
-                        newList += ln + "\n";
-                    }
-                }
-            });
-            console.log(codez);
-            jetpack.write(config.xb1, newList.trim());
-            counter = 1;
-            if(callback){
-                callback(codez.trim());
-            }
-        });
-    }
-    else{
-        dialog.showErrorBox('No File Location Chosen!', 'You did not choose a ' +
-        'XBOX ONE Location! Please choose a location before trying to grab codes!');
-        return '';
-    }
+    ipcRenderer.send('grab-code',{
+        "platform": "xb1",
+        "numCodes": 1
+    });
+    ipcRenderer.once('grabbed-codes', (event, codes) => {
+        if(callback){
+            callback(codes.codes);
+            notify('A discord user redeemed a code.')
+        }
+    });
 }
+// These functions need to prevent copying to clipboard.
+
 
 /**
  * This fuction adds a user to a dictionary of users once they recieve a code.
@@ -562,6 +501,7 @@ function addUserToDict(user, code, callback){
         if(err){
             newData[user.id] = {};
             newData[user.id].code = code;
+            newData[user.id].username = user.username;
             fs.writeFile(assignedCodes, JSON.stringify(newData), (err) => {
                 if(err){
                     console.log(err);
@@ -581,10 +521,12 @@ function addUserToDict(user, code, callback){
                     // append the new user and code to the list
                     newData[user.id] = {};
                     newData[user.id].code = code;
+                    newData[user.id].username = user.username;
                     // save the new list
                     fs.writeFile(assignedCodes, JSON.stringify(newData), (err) => {
                         if(err) throw err;
-                        console.log('New user added to the list! Here is the list now:\n' + newData);
+                        console.log('New user added to the list! Here is the list now:\n');
+                        console.log(newData);
                         // return success/callback
                         callback();
                     });
@@ -603,17 +545,7 @@ function checkUserDict(user, callback){
     fs.access(assignedCodes, fs.constants.F_OK, (err) => {
         let newData = {};
         if(err){
-            newData[user.id] = {};
-            newData[user.id].code = code;
-            fs.writeFile(assignedCodes, JSON.stringify(newData), (err) => {
-                if(err){
-                    console.log(err);
-                }
-                else{
-                    console.log('No assignedCodes file was set. I made one for you!');
-                    callback();
-                }
-            });
+            console.log(err);
         }
         else{
             // get the list of users

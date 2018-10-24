@@ -3,7 +3,7 @@ color
 #f3f3f3
 #3a3a3a
 rgba(59,65,79, 1) #3B414F
-rgba(20, 23,26, 1) #14171A
+rgba(44, 49, 60, 1) #2c313c
 #e2bc48
 Disabled color: #737373
 */
@@ -98,7 +98,7 @@ label{
     /* background-color: white; */
 }
 .main-cont{
-    overflow:hidden;
+    overflow-y: hidden;
 }
 .sub-cont{
     height:100%;
@@ -107,6 +107,16 @@ label{
 }
 .main-card{
     padding: 0.5em 0.5em;
+}
+
+.bottom-card{
+    min-height: 76.375px;
+    overflow-y: visible;
+}
+.main-card2{
+    padding: 0.5em 0.5em;
+    height: 100%;
+    flex-grow: 1;
 }
 .settings-card{
     padding: 0.5em 0.5em;
@@ -137,6 +147,20 @@ label{
     font-size: 16px;
     /* text-transform: uppercase; */
     border: 2px solid #14171A;
+    cursor: pointer;
+    transition-duration: 0.3s;
+    outline: none;
+    text-decoration: none;
+    border-radius: 0.3em;
+}
+.btn2-main{
+    margin: 1em;
+    padding: 0.7em;
+    font-weight: 400;
+    font-size: 16px;
+    /* text-transform: uppercase; */
+    /* border: 2px solid #2c313c; */
+    border: none;
     cursor: pointer;
     transition-duration: 0.3s;
     outline: none;
@@ -180,6 +204,11 @@ label{
     border-color: #6441A4;
     color: #6441A4;
 }
+.a-btn{
+    display: flex;
+    text-decoration: none;
+}
+
 .slider {
     -webkit-appearance: none;  /* Override default CSS styles */
     appearance: none;

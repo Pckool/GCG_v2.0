@@ -1,5 +1,5 @@
 const util = require('util');
-import copy from 'copy-to-clipboard';
+const copy = require('clipboard-copy');
 
 var codezz = '';
 
@@ -7,7 +7,6 @@ app.controller('homeController', function($scope){
     // On home load
     $scope.$on('$routeChangeSuccess', function(event, current, prev){
         if(current.controller === 'homeController'){
-            correctContSize();
             checkConnectBtns();
         }
     });
@@ -142,144 +141,56 @@ app.controller('homeController', function($scope){
 
 });
 
-function pcCodeGrab(callback){
-    console.log('pc: ' + coreSettings.pc);
-    var codez = '';
-    var newList = '';
-    if(coreSettings.pc){
-        fs.readFile(coreSettings.pc, (err, text) => {
-            if(err) throw err;
-            var counter = 1;
-            text.toString().split('\n').forEach( (ln) => {
-                if(err){throw err;return;}
-                if($('#numCodes').length){
-                    if (counter <= $('#numCodes').val()){
-                        console.log('Code ' + counter + ': ' + ln)
-                        codez += ln;
-                        counter++;
-                    }
-                    else if (counter > $('#numCodes').val()){
-                        newList += ln + "\n";
-                    }
-                }
-                else{
-                    if (counter <= 1){
-                        console.log('Code ' + counter + ': ' + ln)
-                        codez += ln;
-                        counter++;
-                    }
-                    else if (counter > 1){
-                        newList += ln + "\n";
-                    }
-                }
+// Make this work properly with discord giveaways as well.
 
-            });
-            copy(codez.trim());
-            jetpack.write(coreSettings.pc, newList.trim());
-            counter = 0;
-            notify('Code(s) Copied to clipboard!');
-            if(callback){
-                callback(codez.trim());
-            }
-        });
-    }
-    else{
-        dialog.showErrorBox('No File Location Chosen!', 'You did not choose ' +
-        'a PC Location! Please choose a location before trying to grab codes!');
-        return '';
-    }
+function pcCodeGrab(callback){
+    ipcRenderer.send('grab-code',{
+        "platform": "pc",
+        "numCodes": $('#numCodes').val()
+    });
+    ipcRenderer.once('grabbed-codes', (event, codes) => {
+        console.log(codes);
+        if(callback){
+            callback(codes.codes);
+        }
+        else{
+            copy(codes.codes);
+            notify('PC codes copied to clipboard');
+        }
+
+    });
 }
 
 function ps4CodeGrab(callback){
-    var codez = '';
-    var newList = '';
-    if(coreSettings.ps4){
-        fs.readFile(coreSettings.ps4, function(err, text){
-            if(err) throw err;
-            var counter = 1;
-            text.toString().split('\n').forEach(function(ln){
-                if(err){throw err;return;}
-                if($('#numCodes').length){
-                    if (counter <= $('#numCodes').val()){
-                        console.log('Code ' + counter + ': ' + ln)
-                        codez += ln;
-                        counter++;
-                    }
-                    else if (counter > $('#numCodes').val()){
-                        newList += ln + "\n";
-                    }
-                }
-                else{
-                    if (counter <= 1){
-                        console.log('Code ' + counter + ': ' + ln)
-                        codez += ln;
-                        counter++;
-                    }
-                    else if (counter > 1){
-                        newList += ln + "\n";
-                    }
-                }
-
-            });
-            copy(codez.trim());
-            jetpack.write(coreSettings.ps4, newList.trim());
-            counter = 0;
-            notify('Code(s) Copied to clipboard!');
-            if(callback){
-                callback(codez.trim());
-            }
-        });
-    }
-    else{
-        dialog.showErrorBox('No File Location Chosen!', 'You did not choose a PS4 ONE Location! Please choose a location before trying to grab codes!');
-        return '';
-    }
+    ipcRenderer.send('grab-code',{
+        "platform": "ps4",
+        "numCodes": $('#numCodes').val()
+    });
+    ipcRenderer.once('grabbed-codes', (event, codes) => {
+        if(callback){
+            callback(codes.codes);
+        }
+        else{
+            copy(codes.codes);
+            notify('PS4 codes copied to clipboard');
+        }
+    });
 }
 
 function xb1CodeGrab(callback){
-    var codez = '';
-    var newList = '';
-    if(coreSettings.xb1){
-        fs.readFile(coreSettings.xb1, function(err, text){
-            if(err) throw err;
-            var counter = 1;
-            text.toString().split('\n').forEach(function(ln){
-                if(err){throw err;return;}
-                if($('#numCodes').length){
-                    if (counter <= $('#numCodes').val()){
-                        console.log('Code ' + counter + ': ' + ln)
-                        codez += ln;
-                        counter++;
-                    }
-                    else if (counter > $('#numCodes').val()){
-                        newList += ln + "\n";
-                    }
-                }
-                else{
-                    if (counter <= 1){
-                        console.log('Code ' + counter + ': ' + ln)
-                        codez += ln;
-                        counter++;
-                    }
-                    else if (counter > 1){
-                        newList += ln + "\n";
-                    }
-                }
-            });
-            copy(codez.trim());
-            jetpack.write(coreSettings.xb1, newList.trim());
-            counter = 0;
-            notify('Code(s) Copied to clipboard!');
-            if(callback){
-                callback(codez.trim());
-            }
-        });
-    }
-    else{
-        dialog.showErrorBox('No File Location Chosen!', 'You did not choose a ' +
-        'XBOX ONE Location! Please choose a location before trying to grab codes!');
-        return '';
-    }
+    ipcRenderer.send('grab-code',{
+        "platform": "xb1",
+        "numCodes": $('#numCodes').val()
+    });
+    ipcRenderer.once('grabbed-codes', (ewvent, codes) => {
+        if(callback){
+            callback(codes.codes);
+        }
+        else{
+            copy(codes.codes);
+            notify('XB1 codes copied to clipboard');
+        }
+    });
 }
 
 function postCodesCheck(event, authed){
@@ -313,13 +224,10 @@ function postCodesCheck(event, authed){
 }
 
 function checkLocations_mainButtons(){
-    ipcRenderer.send('get-core-settings');
-    ipcRenderer.once('send-core-settings', (event, arg) => {
-        let settings = JSON.parse(arg);
-        console.log(settings);
-        coreSettings = settings;
-        console.log(coreSettings);
-        if(coreSettings.pc !== ''){
+    ipcRenderer.send('get-num-codes');
+
+    ipcRenderer.once('num-codes', (event, numCodes) => {
+        if(numCodes.pc !== 0){
             // pc codes location is available
             $('#grabPC').prop('disabled', false);
             //$('#grabPC').toggleClass('btn-color-gold', true);
@@ -330,7 +238,7 @@ function checkLocations_mainButtons(){
             //$('#grabPC').toggleClass('btn-color-gold', false);
             $('#grabPC').toggleClass('btn-disabled', true);
         }
-        if(coreSettings.ps4 !== ''){
+        if(numCodes.ps4 !== 0){
             // ps4 codes location is available
             $('#grabPS4').prop('disabled', false);
             //$('#grabPS4').toggleClass('btn-color-gold', true);
@@ -341,7 +249,7 @@ function checkLocations_mainButtons(){
             //$('#grabPS4').toggleClass('btn-color-gold', false);
             $('#grabPS4').toggleClass('btn-disabled', true);
         }
-        if(coreSettings.xb1 !== ''){
+        if(numCodes.xb1 !== 0){
             // xb1 codes location is available
             $('#grabXB1').prop('disabled', false);
             //$('#grabXB1').toggleClass('btn-color-gold', true);
@@ -352,17 +260,16 @@ function checkLocations_mainButtons(){
             //$('#grabXB1').toggleClass('btn-color-gold', false);
             $('#grabXB1').toggleClass('btn-disabled', true);
         }
+
     });
 }
 
 function checkLocations_checkboxes(){
-    ipcRenderer.send('get-core-settings');
-    ipcRenderer.once('send-core-settings', (event, arg) => {
-        console.log('test: ' + arg);
-        let settings = JSON.parse(arg);
-        coreSettings = settings;
-        console.log(coreSettings);
-        if(coreSettings.pc !== ''){
+    ipcRenderer.send('get-num-codes');
+
+    ipcRenderer.once('num-codes', (event, numCodes) => {
+
+        if(numCodes.pc !== ''){
             // pc codes location is available
             $('#twitPostPCCode').prop('disabled', false);
             $('#twitPostPCCode').toggleClass('btn-disabled', false);
@@ -372,7 +279,7 @@ function checkLocations_checkboxes(){
             $('#twitPostPCCode').prop('disabled', true);
             $('#twitPostPCCode').toggleClass('btn-disabled', true);
         }
-        if(coreSettings.ps4 !== ''){
+        if(numCodes.ps4 !== ''){
             // ps4 codes location is available
             $('#twitPostPS4Code').prop('disabled', false);
             $('#twitPostPS4Code').toggleClass('btn-disabled', false);
@@ -382,7 +289,7 @@ function checkLocations_checkboxes(){
             $('#twitPostPS4Code').prop('disabled', true);
             $('#twitPostPS4Code').toggleClass('btn-disabled', true);
         }
-        if(coreSettings.xb1 !== ''){
+        if(numCodes.xb1 !== ''){
             // xb1 codes location is available
             $('#twitPostXB1Code').prop('disabled', false);
             $('#twitPostXB1Code').toggleClass('btn-disabled', false);
@@ -412,7 +319,7 @@ function checkCheckBoxes(){
 
 $(document).ready( () => {
         console.log('DOM ready!');
-        
+
         // Checking if I should connect to discord
         getDiscordConfig((dat) => {
             if(dat.options.auto_conn){

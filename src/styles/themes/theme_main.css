@@ -3,7 +3,8 @@ color
 #f3f3f3
 #3a3a3a
 rgba(59,65,79, 1) #3B414F
-rgba(20, 23,26, 1) #14171A
+rgba(73, 80, 97, 1) #495061
+rgba(44, 49, 60, 1) #2c313c
 #e2bc48
 Disabled color: #737373
 */
@@ -59,6 +60,16 @@ body{
     border: 2px solid #14171A;
     background-color: rgba(0,0,0,0.0);
 }
+.btn2-main{
+    color: #f3f3f3;
+    background-color: rgba(0,0,0,0.0);
+}
+.btn2-main:hover{
+    background-color: #495061;
+}
+.btn2-main:active{
+    background-color: #e2bc48;
+}
 .btn-disabled{
     color: #737373;
     border-color: #737373;
@@ -108,11 +119,11 @@ h3{
     color: #ffffff;
 }
 .bottom-bar{
-    background-color: #14171A;
+    background-color: #2c313c;
 }
 .extras-card{
     background-color: #f3f3f3;
-    color: #14171A;
+    color: #2c313c;
 }
 .spacer{
     border-bottom: 1px solid rgb(46, 51, 56);

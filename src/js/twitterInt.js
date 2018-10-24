@@ -1,7 +1,3 @@
-var Twit = require('twit');
-var request = require('request');
-const twitterAPI = require('node-twitter-api');
-
 ipcRenderer.send('get-twi-keys');
 
 function twitterPost(postString) {

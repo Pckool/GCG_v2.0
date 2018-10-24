@@ -4,56 +4,65 @@
         <a class="x-icon far fa-times-circle fa-lg" href="#/!"></a>
     </div>
 
-    <div class="main-card" id="main-card">
+    <div class="main-card settings-card" id="main-card">
         <!-- PC Container -->
         <div class="flex-column pc-box">
             <div class="flex-row">
-                <label for="" class="label-min-width">PC</label>
+                <label for="" class="">PC</label>
+                <i id="pc-input" class="sub-text flex-grow2">remaining: <i ng-model="pcLocation" id="pc-location"></i></i>
             </div>
 
             <div class="flex-row margin-lr-1em">
-                <i id="pc-input" class="sub-text flex-grow2">Location: "<i ng-model="pcLocation" id="pc-location"></i>"</i>
+
             </div>
 
             <div class="flex-row">
-                <button class="btn-main flex-grow1 btn-color-gold" type="button" name="pcBrowse" ng-click="showPcFileManager()">Change Location</button>
-                <button class="btn-main flex-grow1 btn-color-gold" type="button" name="pcBrowse" ng-click="addPcCodes()">Add Codes</button>
+                <button class="btn-main flex-grow2 btn-color-gold" type="button" name="pcBrowse" ng-click="showFileManager('pc')">Add Codes</button>
+                <button class="btn-main flex-grow1 btn-color-red" type="button" name="pcClear" ng-click="clearCodes('pc')">Clear Codes</button>
             </div>
         </div>
 
         <!-- PS4 Container -->
         <div class="flex-column ps4-box">
             <div class="flex-row">
-                <label for="" class="label-min-width">PlayStation 4</label>
+                <label for="" class="">PlayStation 4</label>
+                <i id="ps4-input" class="sub-text flex-grow2">remaining: <i ng-model="ps4Location" id="ps4-location" class="sub-text"></i></i>
             </div>
 
             <div class="flex-row margin-lr-1em">
-                <i id="ps4-input" class="sub-text flex-grow2">Location: "<i ng-model="ps4Location" id="ps4-locaion" class="sub-text"></i>"</i>
+
             </div>
 
             <div class="flex-row">
-                <button class="btn-main flex-grow1 btn-color-gold" type="button" name="ps4Browse" ng-click="showPs4FileManager()">Change Location</button>
-                <button class="btn-main flex-grow1 btn-color-gold" type="button" name="ps4Browse" ng-click="addPs4Codes()">Add Codes</button>
+                <button class="btn-main flex-grow2 btn-color-gold" type="button" name="ps4Browse" ng-click="showFileManager('ps4')">Add Codes</button>
+                <button class="btn-main flex-grow1 btn-color-red" type="button" name="ps4Clear" ng-click="clearCodes('ps4')">Clear Codes</button>
             </div>
         </div>
 
         <!-- Xbox One Container -->
         <div class="flex-column xb1-box">
             <div class="flex-row">
-                <label for="" class="label-min-width">Xbox One</label>
+                <label for="" class="">Xbox One</label>
+                <i id="xb1-input" class="sub-text flex-grow2">remaining: <i ng-model="xb1Location" id="xb1-location" class="sub-text"></i></i>
             </div>
 
             <div class="flex-row margin-lr-1em">
-                <i id="xb1-input" class="sub-text flex-grow2">Location: "<i ng-model="xb1Location" id="xb1-locaion" class="sub-text"></i>"</i>
+
             </div>
 
             <div class="flex-row">
-                <button class="btn-main flex-grow1 btn-color-gold" type="button" name="xb1Browse" ng-click="showXb1FileManager()">Change Location</button>
-                <button class="btn-main flex-grow1 btn-color-gold" type="button" name="xb1Browse" ng-click="addXb1Codes()">Add Codes</button>
+                <button class="btn-main flex-grow2 btn-color-gold" type="button" name="xb1Browse" ng-click="showFileManager('xb1')">Add Codes</button>
+                <button class="btn-main flex-grow1 btn-color-red" type="button" name="xb1Clear" ng-click="clearCodes('xb1')">Clear Codes</button>
             </div>
         </div>
 
+        <a href="#!settings/reg-list" class="a-btn">
+            <button type="button" class="btn2-main flex-grow1">List of Registered Codes</button>
+        </a>
+
         <div class="spacer"></div>
+
+        <!-- CONNECTIONS -->
 
         <div class="connections-card flex-row">
             <a href="" class="button-links flex-grow1">
@@ -64,6 +73,12 @@
             </a>
             <a href="#!settings/twitch" class="button-links flex-grow1">
                 <button type="button" class="btn-main btn-color-twch flex-grow1" name="twitchInt">Twitch Settings</button>
+            </a>
+
+        </div>
+        <div class="connections-card flex-row">
+            <a href="#!settings/gsheets" class="button-links flex-grow1">
+                <button type="button" class="btn-main btn-color-twch flex-grow1" name="gsheetsInt">Google Sheets Settings</button>
             </a>
         </div>
 
@@ -76,10 +91,8 @@
             </div>
         </div>
     </div>
-
-    <div class="flex-row flex-end">
+    <div class="bottom-bar flex-row flex-end bottom-card" id="bottom-bar">
         <a href="#/!" class="button-links"><button id="save-btn" class="btn-main flex-grow1 btn-color-green" type="button" name="Save" onclick="saveLocations()">Save</button></a>
         <a class="button-links"><button id="reset-btn" class="btn-main flex-grow1 btn-color-red" type="button" name="Reset" onclick="resetConfig()">Reset</button></a>
     </div>
-
 </div>

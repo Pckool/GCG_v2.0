@@ -59,6 +59,7 @@
         "angular-animate": "^1.7.2",
         "angular-route": "^1.7.2",
         "auto-launch": "^5.0.5",
+        "clipboard-copy": "^2.0.1",
         "copy-to-clipboard": "^3.0.8",
         "crypto-js": "^3.1.9-1",
         "discord.js": "^11.4.2",

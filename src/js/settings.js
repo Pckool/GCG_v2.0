@@ -1,4 +1,3 @@
-const crypto = require('crypto');
 const jetpack = require('fs-jetpack');
 
 var pcLocation = '';
@@ -6,9 +5,6 @@ var ps4Location = '';
 var xb1Location = '';
 const keyPass = 'WarframeFanChannels';
 coreSettings = {
-    "pc": '',
-    "ps4": '',
-    "xb1": '',
     "options": {
         "run_on_start": false
     }
@@ -22,30 +18,32 @@ app.controller('settingsController', function($scope){
     });
     configCheck();
 
-    $scope.showPcFileManager = function(){
+    $scope.showFileManager = function(platform){
         openDialogBox('Glyph Codes', ['txt', 'csv', 'tsv'], (fileLocation) => {
-            pcLocation = fileLocation.toString();
-            coreSettings.pc = fileLocation.toString();
-            console.log(pcLocation);
-            $('#pc-location').text(coreSettings.pc);
+            if(platform === 'pc'){
+                pcLocation = fileLocation.toString();
+                //coreSettings.pc = fileLocation.toString();
+                console.log('new pc location: ' + pcLocation);
+                //$('#pc-location').text(coreSettings.pc);
+            }
+            else if(platform === 'ps4'){
+                ps4Location = fileLocation.toString();
+                //coreSettings.ps4 = fileLocation.toString();
+                console.log(ps4Location);
+                //$('#ps4-locaiton').text(coreSettings.ps4);
+            }
+            else if(platform === 'xb1'){
+                xb1Location = fileLocation.toString();
+                //coreSettings.xb1 = fileLocation.toString();
+                console.log(xb1Location);
+                //$('#xb1-location').text(coreSettings.xb1);
+            }
+            else{
+
+            }
         });
     }
-    $scope.showPs4FileManager = function(){
-        openDialogBox('Glyph Codes', ['txt', 'csv', 'tsv'], (fileLocation) => {
-            ps4Location = fileLocation.toString();
-            coreSettings.ps4 = fileLocation.toString();
-            console.log(ps4Location);
-            $('#ps4-location').text(coreSettings.ps4);
-        });
-    }
-    $scope.showXb1FileManager = function(){
-        openDialogBox('Glyph Codes', ['txt', 'csv', 'tsv'], (fileLocation) => {
-            xb1Location = fileLocation.toString();
-            coreSettings.xb1 = fileLocation.toString();
-            console.log(xb1Location);
-            $('#xb1-location').text(coreSettings.xb1);
-        });
-    }
+    $scope.clearCodes = clearCodes;
 
     $('.core-settings-change').change(function(){
         coreSettings.options.run_on_start = $('#run-on-start').prop('checked');
@@ -59,9 +57,14 @@ function setCoreSettings(){
     ipcRenderer.send('get-core-settings');
     ipcRenderer.once('send-core-settings', (event, arg) => {
         let settings = JSON.parse(arg);
-        $('#pc-location').text(settings.pc);
-        $('#ps4-location').text(settings.ps4);
-        $('#xb1-location').text(settings.xb1);
+
+        ipcRenderer.send('get-num-codes');
+        ipcRenderer.once('num-codes', (event, numCodes) => {
+            $('#pc-location').text(numCodes.pc);
+            $('#ps4-location').text(numCodes.ps4);
+            $('#xb1-location').text(numCodes.xb1);
+        });
+
         $('#run-on-start').prop('checked', settings.options.run_on_start);
     });
 
@@ -97,9 +100,10 @@ function saveLocations(){
     ipcRenderer.send('get-core-settings');
     ipcRenderer.once('send-core-settings', (event, arg) => {
         let settings = JSON.parse(arg);
-        settings.pc = coreSettings.pc;
-        settings.ps4 = coreSettings.ps4;
-        settings.xb1 = coreSettings.xb1;
+
+        // settings.pc = coreSettings.pc;
+        // settings.ps4 = coreSettings.ps4;
+        // settings.xb1 = coreSettings.xb1;
         settings.options.run_on_start = coreSettings.options.run_on_start;
         console.log('This is the new config of the core settings:\n' + settings);
         ipcRenderer.send('set-core-settings', {
@@ -111,7 +115,33 @@ function saveLocations(){
             enabled: settings.options.run_on_start
         });
     });
+    if(pcLocation != undefined && pcLocation.length > 2){
+        console.log('saving pc');
+        ipcRenderer.send('append-codes', {
+            "platform": "pc",
+            "location": pcLocation
+        });
+    }
+    if(ps4Location != undefined && ps4Location.length > 2){
+        console.log('saving ps4: ' + ps4Location);
+        ipcRenderer.send('append-codes', {
+            "platform": "ps4",
+            "location": ps4Location
+        });
+    }
+    if(xb1Location != undefined && xb1Location.length > 2){
+        console.log('saving xb1');
+        ipcRenderer.send('append-codes', {
+            "platform": "xb1",
+            "location": xb1Location
+        });
+    }
 }
+
+function clearCodes(platform) {
+    ipcRenderer.send('clear-codes', {"platform": platform});
+}
+
 function resetConfig(){
     ipcRenderer.send('reset-core-settings');
     pcLocation = '';

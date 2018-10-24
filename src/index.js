@@ -1,6 +1,6 @@
 import { app, autoUpdater, BrowserWindow, ipcMain, dialog, Menu, Tray } from 'electron';
 require('electron-debug')();
-//require('electron-reload')(__dirname);
+
 var http = require('http');
 var fs = require('fs');
 var request = require('superagent');
@@ -20,11 +20,15 @@ const readline = require('readline');
 const {google} = require('googleapis');
 
 var T;                                             // The Twitter Bot
-var coreSettingsLoc = `${__dirname}/bin/loc.dat`;
-var twitDataLoc = `${__dirname}/bin/tw.dat`;       // Directory of the twitter data file
-var initDataLoc = `${__dirname}/bin/init.dat`;       // Directory of the twitter data file
-var disDataLoc = `${__dirname}/bin/dis.dat`;
-var twchDataLoc = `${__dirname}/bin/twch.dat`;
+const coreSettingsLoc = `${__dirname}\\bin\\loc.dat`;
+const twitDataLoc = `${__dirname}\\bin\\tw.dat`;       // Directory of the twitter data file
+const initDataLoc = `${__dirname}\\bin\\init.dat`;       // Directory of the twitter data file
+const disDataLoc = `${__dirname}\\bin\\dis.dat`;
+const twchDataLoc = `${__dirname}\\bin\\twch.dat`;
+const sheetsDataLoc = `${__dirname}\\bin\\sheets.dat`;
+const sheetsTokenLoc = `${__dirname}\\bin\\sheetsT.json`;
+const assignedCodesLoc = `${__dirname}\\lib\\assignedcodes.json`;
+const storedCodesLoc = `${__dirname}\\lib\\storedcodes.json`;
 const keyPass = 'WarframeFanChannels';
 
 var appIcon;
@@ -37,9 +41,6 @@ var config = {
     xb1: ''
 }
 var coreSettings = {
-    pc: '',
-    ps4: '',
-    xb1: '',
     options: {
         run_on_start: false
     }
@@ -62,7 +63,7 @@ const createWindow = () => {
 	mainWindow = new BrowserWindow({
 		width: 600,
 		height: 800,
-        minHeight: 730,
+        minHeight: 760,
 		minWidth: 350,
 		maxWidth: 1020,
 		backgroundColor: '#3B414F',
@@ -135,6 +136,7 @@ const createWindow = () => {
         mainWindow.show();
     });
 
+
 	// Twitter data json init
 	fs.access(twitDataLoc, fs.constants.F_OK, (err) => {
 		if (err) {
@@ -186,6 +188,20 @@ const createWindow = () => {
 		});
 	});
     mkTwitchCfg();
+
+    // INIT of the codes storage
+    fs.access(storedCodesLoc, fs.constants.F_OK, (err) => {
+        if(err){
+            let codesJSON = {
+                "pc":  [],
+                "ps4": [],
+                "xb1": []
+            }
+            fs.writeFile(storedCodesLoc, JSON.stringify(codesJSON), (err) => {
+                if(err){console.log('Couldn\'t create the codes storage.');}
+            });
+        }
+    });
 };
 
 // This method will be called when Electron has finished
@@ -248,9 +264,6 @@ ipcMain.on('get-core-settings', getCoreSettings);
 
 function resetCoreSettings(event, arg){
     let blankSettings = {
-        pc: '',
-        ps4: '',
-        xb1: '',
         options: {
             run_on_start: false
         }
@@ -270,6 +283,44 @@ ipcMain.on('set-config', (event, arg) => {
     let config = JSON.parse(arg);
 });
 
+// GCGrabber -------------------------------------------------------------------
+
+var GCGrabber = require('../backend_modules/GCGrabber.js');
+
+
+ipcMain.on('grab-code', (event, arg) => {
+    GCGrabber.codeGrab(arg.platform, arg.numCodes, storedCodesLoc, (codes, err) =>{
+        event.sender.send('grabbed-codes', {"codes": codes});
+    });
+});
+
+ipcMain.on('append-codes', (event, arg) => {
+    let codez = [];
+    fs.readFile(arg.location, (err, text) => {
+        if(err) throw err;
+        text.toString().split('\n').forEach( (ln, i) => {
+            if(err){throw err;return;}
+            codez[i] = ln.trim();
+        });
+        GCGrabber.appendCodes(arg.platform, codez, storedCodesLoc, (status) => {
+            event.sender.send('append-codes-success', status);
+        });
+    });
+
+});
+ipcMain.on('clear-codes', (event, arg) => {
+    GCGrabber.clearCodes(arg.platform, storedCodesLoc, (status) => {
+        event.sender.send('codes-clear-success', status);
+    });
+});
+
+ipcMain.on('get-num-codes', (event, arg) => {
+    GCGrabber.getCodeNums(storedCodesLoc, (numCodesOBJ) => {
+        event.sender.send('num-codes', numCodesOBJ);
+    });
+});
+
+
 // Other Windows ---------------------------------------------------------------
 
 const createPopup = (filename) => {
@@ -281,7 +332,8 @@ const createPopup = (filename) => {
         maxHeight: 200,
         maxWidth: 400,
         autoHideMenuBar: true,
-        backgroundColor: '#3B414F'
+        backgroundColor: '#3B414F',
+        icon: gcgIcon
     });
     popup.loadURL(`file://${__dirname}/${filename}.html`);
 
@@ -305,7 +357,8 @@ const newWebView = (event, arg) => {
         minHeight: 730,
 		minWidth: 350,
         autoHideMenuBar: true,
-        backgroundColor: '#3B414F'
+        backgroundColor: '#3B414F',
+        icon: gcgIcon
     });
     JSDOM.fromFile(`${__dirname}/webview.html`).then(dom => {
         const document = dom.window.document;
@@ -349,6 +402,7 @@ require('update-electron-app')({
 const isDev = require('electron-is-dev');
 
 if (isDev) {
+    // require('electron-reload')(__dirname);
 	console.log('Running in development');
 } else {
 	console.log('Running in production');
@@ -476,8 +530,9 @@ function handleRequest(req, res) {
         if(req.url.includes('-passport')){
             console.log('BEING SENT SOMETHING FOR GSHEETS PASSPORT');
             let queryObject = queryString.parse(req.url.substr(indexOfQuery));
-            // console.log("in server function: " + JSON.stringify(dat));
+            console.log("in server function: " + JSON.stringify(queryObject));
             if(queryObject){
+                oauthAdd(queryObject.code);
                 console.log(queryObject);
             }
             if(browser){
@@ -537,54 +592,29 @@ server.listen(8888, function() {
 
 
 // Encryption ------------------------------------------------------------------ Encryption
-function encryptData(event, arg){
-    try{
-        var encrpt = cryptoJS.AES.encrypt(arg.value, keyPass);
-        if(event !== undefined)
-            event.sender.send('encrypted-data', encrpt.toString());
-        return encrpt;
-    }
-    catch(err){
-        dialog.showErrorBox('Something Went Wrong...', 'Something wasn\'t encrypted properly. Please report this to TDefton!\nError: ' + err.stack);
-    }
-}
+
+var TDcrpt = require('../backend_modules/TDcrpt.js');
+
+var encryptData = TDcrpt.encryptData;
 ipcMain.on('encrypt-data', encryptData);
 
-function decryptData(event, arg){
-    try{
-        var bytes = cryptoJS.AES.decrypt(arg.value.toString(), keyPass);
-        var decrpt = bytes.toString(cryptoJS.enc.Utf8);
-        if(event !== undefined)
-            event.sender.send('decrypted-data', decrpt);
-        return decrpt;
-    }
-    catch(err){
-        dialog.showErrorBox('Issue Decrypting Some Data', 'Something wasn\'t decrypted properly. Please report this to TDefton!\n\n' + err.stack);
-    }
-}
+var decryptData = TDcrpt.decryptData;
 ipcMain.on('decrypt-data', decryptData);
 
-function getEncryptedData(location, callback){
-    fs.readFile(location, (err, dat) => {
-        if (err) throw err;
-        else{
-            let decryptedDat = decryptData(undefined, {value: dat});
-            if(callback){callback(decryptedDat);}
-        }
+var getEncryptedData = TDcrpt.getEncryptedData;
+
+var setEncryptedData = TDcrpt.setEncryptedData;
+
+// GETTING USER LIST -----------------------------------------------------------
+function getRegList(event){
+    fs.readFile(assignedCodesLoc, (err, reg_list) => {
+        console.log('retrieved list... Sending it now.');
+        let list = JSON.parse(reg_list);
+        // console.log(JSON.stringify(list));
+        event.sender.send('send-reg-list', {"list": JSON.stringify(list)});
     });
 }
-function setEncryptedData(data, location, callback){
-    let encryptedDat = encryptData(undefined, {value: data});
-    fs.writeFile(location, encryptedDat, (err) => {
-        if (err) {
-            callback(err);
-            throw err;
-        }
-        else{
-            if(callback){callback();}
-        }
-    });
-}
+ipcMain.on('get-reg-list', getRegList);
 
 
 // Twitter API data ------------------------------------------------------------ Twitter API data
@@ -627,10 +657,7 @@ function setTwitData(event, arg) {
 }
 ipcMain.on('set-data-twit', setTwitData);
 
-function resetTwitData(event, arg) {
 
-}
-ipcMain.on('reset-twit-data', resetTwitData);
 
 ipcMain.on('get-access_token-twit', (event, arg) => {
     twitter.getRequestToken( (err, requestToken, requestTokenSecret, results) => {
@@ -684,7 +711,6 @@ function twitVerify(event){
                 console.log('Error while verifying twitter credentials: ' + err.stack);
             }
             else{
-
                 connectTwitter();
                 if(event) event.sender.send('twit-authed', true);
             }
@@ -717,6 +743,7 @@ function clearTwitterData(event){
     });
 }
 ipcMain.on('clearTwitterAuth', clearTwitterData);
+ipcMain.on('reset-twit-data', clearTwitterData);
 
 function connectTwitter(){
     fs.readFile(twitDataLoc, (err, data) => {
@@ -780,7 +807,7 @@ ipcMain.on('get-data-twch', getTwitchCfg);
  * @return {None}       [description]
  */
 function saveTwitchCfg(event, arg){
-    setEncryptedData(arg.config, twchDataLoc, (err)=>{
+    setEncryptedData(twchDataLoc, arg.config, (err)=>{
         if(err){
 
         }
@@ -944,7 +971,7 @@ function storeTwitchCode(code){
 
 // FOR DISCORD -----------------------------------------------------------------
 ipcMain.on('save-data-dis', (event, arg) => {
-    setEncryptedData(arg, disDataLoc, (err) => {
+    setEncryptedData(disDataLoc, arg, (err) => {
         if(err){
             event.sender.send('saved-data-dis', {error: err});
         }
@@ -967,14 +994,35 @@ ipcMain.on('load-data-dis', (event, arg) => {
 
 // If modifying these scopes, delete token.json.
 const SCOPES = ['https://www.googleapis.com/auth/spreadsheets.readonly'];
-const TOKEN_PATH = 'src/bin/token.json';
 
-// Load client secrets from a local file.
-fs.readFile('src/lib/credentials.json', (err, content) => {
-	if (err) return console.log('Error loading client secret file:', err);
-	// Authorize a client with credentials, then call the Google Sheets API.
-	authorize(JSON.parse(content), listMajors);
-});
+
+// Load client secrets from a local file and encrypt them.
+// fs.readFile('src/lib/credentials.json', (err, content) => {
+// 	if (err) return console.log('Error loading client secret file:', err);
+// 	// Authorize a client with credentials, then call the Google Sheets API.
+//     setEncryptedData(sheetsDataLoc, '' + content, (err) => {
+//         if(err) throw err;
+//         else{
+//             // sheetsAuthorize(JSON.parse(content), pullFromSheet);
+//             getSheetsConfig();
+//         }
+//     });
+// });
+var oAuth2Client;
+const sheetsOauthLoc = `${__dirname}\\bin\\gs_oAuth2.dat`;
+
+function getSheetsConfig(callback){
+    getEncryptedData(sheetsDataLoc, (content) => {
+        sheetsAuthorize(JSON.parse(content), (oAuth2Client) => {
+            return;
+        });
+    });
+}
+function startGsheetsAuth(event, arg){
+    getSheetsConfig(arg.callback);
+}
+ipcMain.on('gsheets-auth', startGsheetsAuth);
+
 
 /**
  * Create an OAuth2 client with the given credentials, and then execute the
@@ -982,13 +1030,13 @@ fs.readFile('src/lib/credentials.json', (err, content) => {
  * @param {Object} credentials The authorization client credentials.
  * @param {function} callback The callback to call with the authorized client.
  */
-function authorize(credentials, callback) {
-	const {client_secret,client_id,redirect_uris} = credentials.installed;
-	const oAuth2Client = new google.auth.OAuth2(client_id, client_secret, redirect_uris[0]);
+function sheetsAuthorize(credentials, callback) {
+	const {client_secret, client_id, redirect_uris} = credentials.installed;
+    oAuth2Client = new google.auth.OAuth2(client_id, client_secret, redirect_uris[0]);
 
 	// Check if we have previously stored a token.
-	fs.readFile(TOKEN_PATH, (err, token) => {
-		if (err) return getSheetsToken(oAuth2Client, callback);
+	fs.readFile(sheetsTokenLoc, (err, token) => {
+		if (err) return launchAuthSite(oAuth2Client, callback);
 		oAuth2Client.setCredentials(JSON.parse(token));
 		callback(oAuth2Client);
 	});
@@ -1000,59 +1048,95 @@ function authorize(credentials, callback) {
  * @param {google.auth.OAuth2} oAuth2Client The OAuth2 client to get token for.
  * @param {getEventsCallback} callback The callback for the authorized client.
  */
-function getSheetsToken(oAuth2Client, callback) {
+function launchAuthSite(oAuth2Client, callback) {
 	const authUrl = oAuth2Client.generateAuthUrl({
 		access_type: 'offline',
 		scope: SCOPES,
 	});
-	console.log('Authorize this app by visiting this url:', authUrl);
     newWebView(undefined, {
         url: authUrl,
     });
+}
+function oauthAdd(code){
+    oAuth2Client.getToken(code, (err, token) => {
+		if (err) return console.error('Error while trying to retrieve access token', err);
+		oAuth2Client.setCredentials(token);
+		// Store the token to disk for later program executions
+		fs.writeFile(sheetsTokenLoc, JSON.stringify(token), (err) => {
+			if (err) console.error(err);
+			console.log('Token stored to', sheetsTokenLoc);
 
-	const rl = readline.createInterface({
-		input: process.stdin,
-		output: process.stdout,
-	});
-	rl.question('Enter the code from that page here: ', (code) => {
-		rl.close();
-		oAuth2Client.getToken(code, (err, token) => {
-			if (err) return console.error('Error while trying to retrieve access token', err);
-			oAuth2Client.setCredentials(token);
-			// Store the token to disk for later program executions
-			fs.writeFile(TOKEN_PATH, JSON.stringify(token), (err) => {
-				if (err) console.error(err);
-				console.log('Token stored to', TOKEN_PATH);
-			});
-			callback(oAuth2Client);
+            setEncryptedData(sheetsOauthLoc, JSON.stringify(oAuth2Client), (err) => {
+                if(err) throw err;
+            });
 		});
 	});
 }
 
 /**
  * Prints the names and majors of students in a sample spreadsheet:
- * @see https://docs.google.com/spreadsheets/d/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms/edit
  * @param {google.auth.OAuth2} auth The authenticated Google OAuth client.
  */
-function listMajors(auth) {
-	const sheets = google.sheets({
-		version: 'v4',
-		auth
-	});
-	sheets.spreadsheets.values.get({
-		spreadsheetId: '1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms',
-		range: 'Class Data!A2:E',
-	}, (err, res) => {
-		if (err) return console.log('The API returned an error: ' + err);
-		const rows = res.data.values;
-		if (rows.length) {
-			console.log('Name, Major:');
-			// Print columns A and E, which correspond to indices 0 and 4.
-			rows.map((row) => {
-				console.log(`${row[0]}, ${row[4]}`);
-			});
-		} else {
-			console.log('No data found.');
-		}
-	});
+function pullFromSheet(event, arg) {
+    getEncryptedData(sheetsDataLoc, (content) => {
+        let auth = JSON.parse(content);
+
+        const sheets = google.sheets({
+    		version: 'v4',
+    		auth
+    	});
+        let apiRanges = [];
+
+        if(arg.tables.pc){
+            apiRanges[0] = `${arg.tables.pc}!A9000`;
+        }
+        if(arg.tables.ps4){
+            apiRanges[1] = `${arg.tables.ps4}!A9000`;
+        }
+        if(arg.tables.xb1){
+            apiRanges[2] = `${arg.tables.xb1}!A9000`;
+        }
+
+    	sheets.spreadsheets.values.batchGet({
+    		spreadsheetId: arg.sheetID,
+    		ranges: apiRanges
+    	}, (err, res) => {
+    		if (err) return console.log('The API returned an error: ' + err);
+            let pcCodes, ps4Codes, xb1Codes;
+            if(res.valueRanges[0])
+    		    pcCodes = res.valueRanges[0].values;
+            if(res.valueRanges[1])
+                ps4Codes = res.valueRanges[1].values;
+            if(res.valueRanges[2])
+                xb1Codes = res.valueRanges[2].values;
+
+    		if (pcCodes.length) {
+                GCGrabber.appendCodes('pc', pcCodes, storedCodesLoc, () => {
+                    event.sender.send('gsheets-extracted-pc', 'Succcess')
+                });
+    		}
+            else {
+    			console.log('No data found.');
+    		}
+
+            if (ps4Codes.length) {
+                GCGrabber.appendCodes('ps4', ps4Codes, storedCodesLoc, () => {
+                    event.sender.send('gsheets-extracted-ps4', 'Succcess')
+                });
+    		}
+            else {
+    			console.log('No data found.');
+    		}
+            if (xb1Codes.length) {
+                GCGrabber.appendCodes('xb1', xb1Codes, storedCodesLoc, () => {
+                    event.sender.send('gsheets-extracted-xb1', 'Succcess')
+                });
+    		}
+            else {
+    			console.log('No data found.');
+    		}
+    	});
+    });
+
 }
+ipcMain.on('gsheets-extract', pullFromSheet)
