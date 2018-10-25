@@ -26,7 +26,7 @@ const initDataLoc = `${__dirname}\\bin\\init.dat`;       // Directory of the twi
 const disDataLoc = `${__dirname}\\bin\\dis.dat`;
 const twchDataLoc = `${__dirname}\\bin\\twch.dat`;
 const sheetsDataLoc = `${__dirname}\\bin\\sheets.dat`;
-const sheetsTokenLoc = `${__dirname}\\bin\\sheetsT.json`;
+
 const assignedCodesLoc = `${__dirname}\\lib\\assignedcodes.json`;
 const storedCodesLoc = `${__dirname}\\lib\\storedcodes.json`;
 const keyPass = 'WarframeFanChannels';
@@ -1013,6 +1013,7 @@ const sheetsOauthLoc = `${__dirname}\\bin\\gs_oAuth2.dat`;
 
 function getSheetsConfig(callback){
     getEncryptedData(sheetsDataLoc, (content) => {
+        console.log('Starting GSheets Auth...');
         sheetsAuthorize(JSON.parse(content), (oAuth2Client) => {
             return;
         });
@@ -1035,9 +1036,13 @@ function sheetsAuthorize(credentials, callback) {
     oAuth2Client = new google.auth.OAuth2(client_id, client_secret, redirect_uris[0]);
 
 	// Check if we have previously stored a token.
-	fs.readFile(sheetsTokenLoc, (err, token) => {
+	fs.readFile(sheetsOauthLoc, (err, token) => {
 		if (err) return launchAuthSite(oAuth2Client, callback);
 		oAuth2Client.setCredentials(JSON.parse(token));
+
+        setEncryptedData(sheetsOauthLoc, JSON.stringify(oAuth2Client), (err) => {
+            if(err) throw err;
+        });
 		callback(oAuth2Client);
 	});
 }
@@ -1062,80 +1067,101 @@ function oauthAdd(code){
 		if (err) return console.error('Error while trying to retrieve access token', err);
 		oAuth2Client.setCredentials(token);
 		// Store the token to disk for later program executions
-		fs.writeFile(sheetsTokenLoc, JSON.stringify(token), (err) => {
-			if (err) console.error(err);
-			console.log('Token stored to', sheetsTokenLoc);
-
-            setEncryptedData(sheetsOauthLoc, JSON.stringify(oAuth2Client), (err) => {
-                if(err) throw err;
-            });
-		});
+        setEncryptedData(sheetsOauthLoc, JSON.stringify(oAuth2Client), (err) => {
+            if(err) throw err;
+        });
 	});
 }
+
+function clearGSheetsToken(event, arg) {
+    fs.unlink(sheetsOauthLoc, (err) => {
+        if (err) throw err;
+    })
+}
+ipcMain.on('clear-gsheets-token', clearGSheetsToken);
 
 /**
  * Prints the names and majors of students in a sample spreadsheet:
  * @param {google.auth.OAuth2} auth The authenticated Google OAuth client.
  */
 function pullFromSheet(event, arg) {
-    getEncryptedData(sheetsDataLoc, (content) => {
-        let auth = JSON.parse(content);
+    getEncryptedData(sheetsOauthLoc, (content) => {
+        let AuthClientData = JSON.parse(content);
+
+        let AuthClient = new google.auth.OAuth2(AuthClientData._clientId, AuthClientData._clientSecret, AuthClientData.redirectUri);
+		AuthClient.setCredentials(AuthClientData.credentials);
 
         const sheets = google.sheets({
     		version: 'v4',
-    		auth
+    		AuthClient
     	});
-        let apiRanges = [];
+        let apiRanges = new Array();
 
         if(arg.tables.pc){
-            apiRanges[0] = `${arg.tables.pc}!A9000`;
+            apiRanges[0] = `${arg.tables.pc}!A1:A9000`;
         }
         if(arg.tables.ps4){
-            apiRanges[1] = `${arg.tables.ps4}!A9000`;
+            apiRanges[1] = `${arg.tables.ps4}!A1:A9000`;
         }
         if(arg.tables.xb1){
-            apiRanges[2] = `${arg.tables.xb1}!A9000`;
+            apiRanges[2] = `${arg.tables.xb1}!A1:A9000`;
         }
+        var apiRangesFiltered = [];
+        apiRangesFiltered = apiRanges.filter(function (el) {
+            return el != null;
+        });
 
     	sheets.spreadsheets.values.batchGet({
     		spreadsheetId: arg.sheetID,
-    		ranges: apiRanges
+    		ranges: apiRangesFiltered,
+            majorDimension: "COLUMNS",
+            auth: AuthClient
     	}, (err, res) => {
-    		if (err) return console.log('The API returned an error: ' + err);
-            let pcCodes, ps4Codes, xb1Codes;
-            if(res.valueRanges[0])
-    		    pcCodes = res.valueRanges[0].values;
-            if(res.valueRanges[1])
-                ps4Codes = res.valueRanges[1].values;
-            if(res.valueRanges[2])
-                xb1Codes = res.valueRanges[2].values;
+    		if (err) {
+                console.log(err)
+                return dialog.showErrorBox('Something Went Wrong...', 'It looks like you didn\'t enter the correct table name(s) or spreadsheetID. Please double check your inputs.');
+            }
+            let pcCodes  = [];
+            let ps4Codes = [];
+            let xb1Codes = [];
 
-    		if (pcCodes.length) {
-                GCGrabber.appendCodes('pc', pcCodes, storedCodesLoc, () => {
-                    event.sender.send('gsheets-extracted-pc', 'Succcess')
-                });
-    		}
-            else {
-    			console.log('No data found.');
-    		}
+            // Each selected platform
+            res.data.valueRanges.forEach(function(el, i){
+                if(arg.tables.pc.length > 1 && el.range.toLowerCase().includes( arg.tables.pc.toLowerCase() )){
+                    // Each sub array
+                    pcCodes = el.values[0];
+                }
+                if(arg.tables.ps4.length > 1 && el.range.toLowerCase().includes( arg.tables.ps4.toLowerCase() )){
+                    // Each sub array
+                    ps4Codes = el.values[0];
+                }
+                if(arg.tables.xb1.length > 1 && el.range.toLowerCase().includes( arg.tables.xb1.toLowerCase() )){
+                    // Each sub array
+                    xb1Codes = el.values[0];
+                }
+            });
+            let pcCodesTrimmed = [];
+            pcCodes.forEach(function(el, i){
+                pcCodesTrimmed[i] = el.trim();
+            });
+            let ps4CodesTrimmed = [];
+            ps4Codes.forEach(function(el, i){
+                ps4CodesTrimmed[i] = el.trim();
+            });
+            let xb1CodesTrimmed = [];
+            xb1Codes.forEach(function(el, i){
+                xb1CodesTrimmed[i] = el.trim();
+            });
 
-            if (ps4Codes.length) {
-                GCGrabber.appendCodes('ps4', ps4Codes, storedCodesLoc, () => {
-                    event.sender.send('gsheets-extracted-ps4', 'Succcess')
+            GCGrabber.appendCodes('pc', pcCodesTrimmed, storedCodesLoc, () => {
+                GCGrabber.appendCodes('ps4', ps4CodesTrimmed, storedCodesLoc, () => {
+                    GCGrabber.appendCodes('xb1', xb1CodesTrimmed, storedCodesLoc, () => {
+                        event.sender.send('gsheets-extracted', 'Succcess');
+                    });
                 });
-    		}
-            else {
-    			console.log('No data found.');
-    		}
-            if (xb1Codes.length) {
-                GCGrabber.appendCodes('xb1', xb1Codes, storedCodesLoc, () => {
-                    event.sender.send('gsheets-extracted-xb1', 'Succcess')
-                });
-    		}
-            else {
-    			console.log('No data found.');
-    		}
+            });
     	});
+
     });
 
 }

@@ -48,7 +48,7 @@ import {dialog} from 'electron';
                 dataOBJ = JSON.parse(data);
                 for (var i = 0; i < numCodes; i++) {
                     try{
-                        codez = codez + dataOBJ.pc.shift() + "\n";
+                        codez = codez + dataOBJ.ps4.shift() + "\n";
                     }catch(e){
                         dialog.showErrorBox('Ran out of Codes :(', 'Looks like you ran out of codes or something :( \n send this to TDefton: ' + e)
                     }
@@ -66,7 +66,7 @@ import {dialog} from 'electron';
                 dataOBJ = JSON.parse(data);
                 for (var i = 0; i < numCodes; i++) {
                     try{
-                        codez = codez + dataOBJ.pc.shift() + "\n";
+                        codez = codez + dataOBJ.xb1.shift() + "\n";
                     }catch(e){
                         dialog.showErrorBox('Ran out of Codes :(', 'Looks like you ran out of codes or something :( \n send this to TDefton: ' + e)
                     }
@@ -86,8 +86,9 @@ import {dialog} from 'electron';
     }
 
     GCGrabber.appendCodes = function(platform, codez, storedCodesLoc, callback){
+        platform = platform.toLowerCase();
 
-        if(platform === 'pc'){
+        if(platform === 'pc' && codez.length > 0){
             let dataOBJ;
 
             fs.readFile(storedCodesLoc, (err, data) => {
@@ -110,12 +111,11 @@ import {dialog} from 'electron';
             });
 
         }
-        else if(platform === 'ps4'){
+        else if(platform === 'ps4' && codez.length > 0){
             let dataOBJ;
 
             fs.readFile(storedCodesLoc, (err, data) => {
                 if(err) throw err;
-
                 dataOBJ = JSON.parse(data);
 
                 let concatCodes = dataOBJ.ps4.concat(codez);
@@ -133,12 +133,11 @@ import {dialog} from 'electron';
                 });
             });
         }
-        else if(platform === 'xb1'){
+        else if(platform === 'xb1' && codez.length > 0){
             let dataOBJ;
 
             fs.readFile(storedCodesLoc, (err, data) => {
                 if(err) throw err;
-
                 dataOBJ = JSON.parse(data);
 
                 let concatCodes = dataOBJ.xb1.concat(codez);
@@ -156,7 +155,8 @@ import {dialog} from 'electron';
                 });
             });
         }
-        if(callback){
+        else if(callback){
+            console.log('There was no platform, or the codes array was empty. Returning.');
             callback();
         }
     }
@@ -180,7 +180,8 @@ import {dialog} from 'electron';
                 buttons: [
                     "Yes",
                     "No"
-                ]
+                ],
+                message: "Are you sure you want to clear your codes?"
             }, (res) => {
                 if(res === 0) {
                     fs.writeFile(storedCodesLoc, JSON.stringify(dataOBJ), (err) => {

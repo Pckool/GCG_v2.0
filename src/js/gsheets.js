@@ -33,5 +33,26 @@ app.controller('gsheetsSettingsController', function($scope){
         ipcRenderer.once('gsheets-extracted-xb1', (event, status) => {
             console.log('Appending Xbox One codes from GSheets: ' + status);
         });
+        ipcRenderer.once('gsheets-extracted', (event, status) => {
+            window.location = '#/!';
+            notify('Glyph codes extracted!');
+        });
+
     }
+    checkSheetCode();
+    $scope.sheetsChanged = function() {
+        checkSheetCode();
+    }
+
 });
+function checkSheetCode(){
+    if($('#gsheets-id').val().length > 5 && ($('#gsheets-table-pc').val().length > 1 || $('#gsheets-table-ps4').val().length > 1 || $('#gsheets-table-xb1').val().length > 1) ){
+        // pc codes location is available
+        $('#gsheets-extract').prop('disabled', false);
+        $('#gsheets-extract').toggleClass('btn-disabled', false);
+    }
+    else{
+        $('#gsheets-extract').prop('disabled', true);
+        $('#gsheets-extract').toggleClass('btn-disabled', true);
+    }
+}

@@ -9,7 +9,7 @@
             <div class="flex-row">
                 <div class="flex-column flex-grow1">
                     <label for="user">Sheets ID*</label>
-                    <input type="text" id="gsheets-id" class="input-box" name="user" value="" ng-model="gsheets_id" ng-change="" required/>
+                    <input type="text" id="gsheets-id" class="input-box" name="user" value="" ng-model="gsheets_id" ng-change="sheetsChanged()" required/>
                 </div>
             </div>
 
@@ -17,22 +17,22 @@
 
             <div class="flex-row">
                 <div class="flex-column flex-grow1">
-                    <label for="user">PC Table Name*</label>
-                    <input type="text" id="gsheets-table-pc" class="input-box flex-grow1" name="user" value="" ng-model="gsheets_table_pc" ng-change=""/>
+                    <label for="user">PC Table Name</label>
+                    <input type="text" id="gsheets-table-pc" class="input-box flex-grow1" name="user" value="" ng-model="gsheets_table_pc" ng-change="sheetsChanged()"/>
                 </div>
             </div>
 
             <div class="flex-row">
                 <div class="flex-column flex-grow1">
-                    <label for="user">PS4 Table Name*</label>
-                    <input type="text" id="gsheets-table-ps4" class="input-box flex-grow1" name="user" value="" ng-model="gsheets_table_ps4" ng-change=""/>
+                    <label for="user">PS4 Table Name</label>
+                    <input type="text" id="gsheets-table-ps4" class="input-box flex-grow1" name="user" value="" ng-model="gsheets_table_ps4" ng-change="sheetsChanged()"/>
                 </div>
             </div>
-            
+
             <div class="flex-row">
                 <div class="flex-column flex-grow1">
-                    <label for="user">XB1 Table Name*</label>
-                    <input type="text" id="gsheets-table-xb1" class="input-box flex-grow1" name="user" value="" ng-model="gsheets_table_xb1" ng-change=""/>
+                    <label for="user">XB1 Table Name</label>
+                    <input type="text" id="gsheets-table-xb1" class="input-box flex-grow1" name="user" value="" ng-model="gsheets_table_xb1" ng-change="sheetsChanged()"/>
                 </div>
             </div>
 

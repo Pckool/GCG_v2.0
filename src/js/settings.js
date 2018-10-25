@@ -101,9 +101,6 @@ function saveLocations(){
     ipcRenderer.once('send-core-settings', (event, arg) => {
         let settings = JSON.parse(arg);
 
-        // settings.pc = coreSettings.pc;
-        // settings.ps4 = coreSettings.ps4;
-        // settings.xb1 = coreSettings.xb1;
         settings.options.run_on_start = coreSettings.options.run_on_start;
         console.log('This is the new config of the core settings:\n' + settings);
         ipcRenderer.send('set-core-settings', {
@@ -140,6 +137,10 @@ function saveLocations(){
 
 function clearCodes(platform) {
     ipcRenderer.send('clear-codes', {"platform": platform});
+    ipcRenderer.once('codes-clear-success', (event, status) => {
+        window.location = '#/!';
+        notify(platform + ' codes cleared!');
+    });
 }
 
 function resetConfig(){
@@ -155,6 +156,8 @@ function resetConfig(){
     resetDiscordConfig();
 
     resetTwitchConfig();
+
+    ipcRenderer.send('clear-gsheets-token');
 
     window.location = '#/!';
     notify('Data Reset');

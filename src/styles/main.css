@@ -204,6 +204,10 @@ label{
     border-color: #6441A4;
     color: #6441A4;
 }
+.btn-color-sheets:hover{
+    border-color: #34A853;
+    color: #34A853;
+}
 .a-btn{
     display: flex;
     text-decoration: none;
