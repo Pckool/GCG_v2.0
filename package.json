@@ -30,6 +30,7 @@
             },
             "electronPackagerConfig": {
                 "packageManager": "npm",
+                "asar": true,
                 "icon": "./src/media/logo/gcg_icon_.ico"
             },
             "electronWinstallerConfig": {
