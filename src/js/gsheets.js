@@ -9,8 +9,7 @@ app.controller('gsheetsSettingsController', function($scope){
     // INIT FUNCTIONS
     $scope.gsheetsAuth = function(){
         ipcRenderer.send('gsheets-auth', {
-            "callback": function(){
-
+            "callback": function() {
             }
         });
     }

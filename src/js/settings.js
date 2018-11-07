@@ -10,10 +10,13 @@ coreSettings = {
     }
 };
 app.controller('settingsController', function($scope){
-    setCoreSettings();
+    getCoreSettings();
     $scope.$on('$routeChangeStart', function(event, current, prev){
         if(current.controller === 'settingsController'){
             console.log('LETS GO!');
+            LoadConfig(() => {
+
+            });
         }
     });
     configCheck();
@@ -22,25 +25,61 @@ app.controller('settingsController', function($scope){
         openDialogBox('Glyph Codes', ['txt', 'csv', 'tsv'], (fileLocation) => {
             if(platform === 'pc'){
                 pcLocation = fileLocation.toString();
-                //coreSettings.pc = fileLocation.toString();
-                console.log('new pc location: ' + pcLocation);
-                //$('#pc-location').text(coreSettings.pc);
+                dialog.showMessageBox({
+                    type: "question",
+                    buttons: ["Yes", "Cancel"],
+                    title: "Are you sure?",
+                    message: `I am about to add this file "${pcLocation}" to the pc codes list. Are you sure this is the correct file?`,
+
+                }, (res) => {
+                    console.log(res);
+                    if(res === 0){
+                        ipcRenderer.send('append-codes', {
+                            "platform": "pc",
+                            "location": pcLocation
+                        });
+                    }
+                });
             }
             else if(platform === 'ps4'){
                 ps4Location = fileLocation.toString();
-                //coreSettings.ps4 = fileLocation.toString();
-                console.log(ps4Location);
-                //$('#ps4-locaiton').text(coreSettings.ps4);
+                dialog.showMessageBox({
+                    type: "question",
+                    buttons: ["Yes", "Cancel"],
+                    title: "Are you sure?",
+                    message: `I am about to add this file "${ps4Location}" to the PS4 codes list. Are you sure this is the correct file?`,
+
+                }, (res) => {
+                    console.log(res);
+                    if(res === 0){
+                        ipcRenderer.send('append-codes', {
+                            "platform": "ps4",
+                            "location": ps4Location
+                        });
+                    }
+                });
             }
             else if(platform === 'xb1'){
                 xb1Location = fileLocation.toString();
-                //coreSettings.xb1 = fileLocation.toString();
-                console.log(xb1Location);
-                //$('#xb1-location').text(coreSettings.xb1);
-            }
-            else{
+                dialog.showMessageBox({
+                    type: "question",
+                    buttons: ["Yes", "Cancel"],
+                    title: "Are you sure?",
+                    message: `I am about to add this file "${xb1Location}" to the Xbox One codes list. Are you sure this is the correct file?`,
 
+                }, (res) => {
+                    if(res === 0){
+                        ipcRenderer.send('append-codes', {
+                            "platform": "xb1",
+                            "location": xb1Location
+                        });
+                    }
+                });
             }
+            ipcRenderer.once('append-codes-success', (event, arg) =>{
+                checkNumCodes();
+                notify('Code list updated!')
+            });
         });
     }
     $scope.clearCodes = clearCodes;
@@ -51,23 +90,37 @@ app.controller('settingsController', function($scope){
     });
     correctContSize();
 
+    $scope.showVersion = function(){
+        ipcRenderer.send('show-app-version');
+    }
+
 });
 
-function setCoreSettings(){
+function getCoreSettings(){
     ipcRenderer.send('get-core-settings');
     ipcRenderer.once('send-core-settings', (event, arg) => {
-        let settings = JSON.parse(arg);
-
-        ipcRenderer.send('get-num-codes');
-        ipcRenderer.once('num-codes', (event, numCodes) => {
-            $('#pc-location').text(numCodes.pc);
-            $('#ps4-location').text(numCodes.ps4);
-            $('#xb1-location').text(numCodes.xb1);
-        });
+        let settings;
+        try{
+            settings = JSON.parse(arg);
+        }
+        catch(err){
+            console.log('Resetting Data...');
+            ipcRenderer.send('reset-core-settings');
+            getCoreSettings();
+        }
+        checkNumCodes();
 
         $('#run-on-start').prop('checked', settings.options.run_on_start);
     });
 
+}
+function checkNumCodes(){
+    ipcRenderer.send('get-num-codes');
+    ipcRenderer.once('num-codes', (event, numCodes) => {
+        $('#pc-numcodes').text(numCodes.pc);
+        $('#ps4-numcodes').text(numCodes.ps4);
+        $('#xb1-numcodes').text(numCodes.xb1);
+    });
 }
 
 
@@ -112,26 +165,18 @@ function saveLocations(){
             enabled: settings.options.run_on_start
         });
     });
+    let locations = [];
     if(pcLocation != undefined && pcLocation.length > 2){
         console.log('saving pc');
-        ipcRenderer.send('append-codes', {
-            "platform": "pc",
-            "location": pcLocation
-        });
+        locations[0] = pcLocation;
     }
     if(ps4Location != undefined && ps4Location.length > 2){
         console.log('saving ps4: ' + ps4Location);
-        ipcRenderer.send('append-codes', {
-            "platform": "ps4",
-            "location": ps4Location
-        });
+        locations[1] = ps4Location;
     }
     if(xb1Location != undefined && xb1Location.length > 2){
         console.log('saving xb1');
-        ipcRenderer.send('append-codes', {
-            "platform": "xb1",
-            "location": xb1Location
-        });
+        locations[2] = xb1Location;
     }
 }
 
@@ -203,10 +248,7 @@ function configCheck(){
 // On the initial load, we will load the user's data
 $(document).ready(function(){
 
-        LoadConfig(() => {
-            // saveLocations(); //#################################################
-            // ipcRenderer.send('set-config', JSON.stringify(coreSettings));
-        });
+
 
     //configCheck();
 

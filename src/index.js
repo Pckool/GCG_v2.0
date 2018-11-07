@@ -4,8 +4,6 @@ require('electron-debug')();
 var http = require('http');
 var fs = require('fs');
 var request = require('superagent');
-var jsdom = require('jsdom');
-var {JSDOM} = jsdom;
 var url = require('url');
 var mime = require('mime');
 var path = require('path');
@@ -20,16 +18,21 @@ const readline = require('readline');
 const {google} = require('googleapis');
 
 var T;                                             // The Twitter Bot
-const coreSettingsLoc = `${__dirname}\\bin\\loc.dat`;
-const twitDataLoc = `${__dirname}\\bin\\tw.dat`;       // Directory of the twitter data file
-const initDataLoc = `${__dirname}\\bin\\init.dat`;       // Directory of the twitter data file
-const disDataLoc = `${__dirname}\\bin\\dis.dat`;
-const twchDataLoc = `${__dirname}\\bin\\twch.dat`;
-const sheetsDataLoc = `${__dirname}\\bin\\sheets.dat`;
 
-const assignedCodesLoc = `${__dirname}\\lib\\assignedcodes.json`;
-const storedCodesLoc = `${__dirname}\\lib\\storedcodes.json`;
-const keyPass = 'WarframeFanChannels';
+var binLoc;
+var libLoc;
+
+var coreSettingsLoc;
+var twitDataLoc;      // Directory of the twitter data file
+// var initDataLoc;       // Directory of the twitter data file
+var disDataLoc;
+var twchDataLoc;
+var sheetsDataLoc;
+
+var assignedCodesLoc;
+var storedCodesLoc;
+// ASSIGN CODES ----------------------------------------------------------------
+var AssignCodes = require('../backend_modules/AssignCodes.js');
 
 var appIcon;
 var gcgIcon = path.join(__dirname, '/media/logo/gcg_icon_.ico');
@@ -106,8 +109,8 @@ const createWindow = () => {
             {
                 label: 'Quit',
                 click:  function(){
-                    application.isQuiting = true;
-                    application.quit();
+                    app.isQuiting = true;
+                    app.quit();
                 }
             }
         ]);
@@ -122,8 +125,8 @@ const createWindow = () => {
             {
                 label: 'Quit',
                 click:  function(){
-                    application.isQuiting = true;
-                    application.quit();
+                    app.isQuiting = true;
+                    app.quit();
                 }
             }
         ]);
@@ -136,70 +139,58 @@ const createWindow = () => {
         mainWindow.show();
     });
 
-
-	// Twitter data json init
-	fs.access(twitDataLoc, fs.constants.F_OK, (err) => {
-		if (err) {
-			fs.readFile(initDataLoc, (err, data) => {
-				var text = decryptData(undefined, {
-					value: data
-				});
-				var jsn = JSON.parse(text);
-				var twitData = {
-					consumer_key: jsn.consumer_key,
-					consumer_secret: jsn.consumer_secret,
-					request_token: '',
-					request_secret: '',
-					verifier: '',
-					access_token: '',
-					access_secret: ''
-				}
-				var dat = JSON.stringify(twitData);
-				let dec = encryptData(undefined, {
-					value: dat
-				});
-				fs.writeFile(twitDataLoc, dec, (err) => {
-					if (err) {
-						console.log(err);
-						fs.unlink(twitDataLoc, (err) => {
-							if (err) throw err;
-							console.log('Removed the file I just tried to make.');
-						});
-						throw err;
-					}
-					console.log('Made the new file')
-				});
-				return;
-			});
-
-		}
-		console.log('Twitter Data file found! Loading now...');
-
-		fs.readFile(twitDataLoc, (err, data) => {
-			if (err) {
-				throw err;
-			} else {
-				let dat = JSON.parse(decryptData(undefined, {value: data} ));
-				if (dat.access_token && dat.access_secret) {
-					connectTwitter();
-				}
-			}
-
-		});
-	});
-    mkTwitchCfg();
-
     // INIT of the codes storage
+    var saveLoc = `${app.getPath("documents")}\\GCG`;
+    binLoc = `${saveLoc}\\bin`;
+    libLoc = `${saveLoc}\\lib`;
+    checkDir(saveLoc);
+    checkDir(libLoc);
+    checkDir(binLoc);
+
+    coreSettingsLoc = `${binLoc}\\loc.dat`;
+    twitDataLoc = `${binLoc}\\tw.dat`;       // Directory of the twitter data file
+    // initDataLoc = `${binLoc}\\init.dat`;       // Directory of the twitter data file
+    disDataLoc = `${binLoc}\\dis.dat`;
+    twchDataLoc = `${binLoc}\\twch.dat`;
+    sheetsDataLoc = `${binLoc}\\sheets.dat`;
+
+    assignedCodesLoc = `${libLoc}\\assignedcodes.json`;
+    storedCodesLoc = `${libLoc}\\storedcodes.json`;
+
+    mkTwitterCfg();
+    checkTwitterConfig();
+    mkTwitchCfg();
+    mkDiscordCfc();
+    mkGsheetsCred();
+    AssignCodes.checkAssignedCodes(assignedCodesLoc);
+
     fs.access(storedCodesLoc, fs.constants.F_OK, (err) => {
+        let codesJSON = {
+            "pc":  [],
+            "ps4": [],
+            "xb1": []
+        }
         if(err){
-            let codesJSON = {
-                "pc":  [],
-                "ps4": [],
-                "xb1": []
-            }
-            fs.writeFile(storedCodesLoc, JSON.stringify(codesJSON), (err) => {
+            fs.writeFile(storedCodesLoc, JSON.stringify(codesJSON, null, 4), (err) => {
                 if(err){console.log('Couldn\'t create the codes storage.');}
             });
+        }
+        else{
+            let data = fs.readFileSync(storedCodesLoc);
+            let newdat;
+            try {
+                newdat = JSON.parse(data);
+
+                console.log('found a good assigned codes file.');
+            } catch (e) {
+                fs.writeFile(storedCodesLoc, JSON.stringify(codesJSON, null, 4), (err) => {
+                    if(err){console.log('Couldn\'t create the codes storage.');}
+                });
+
+            } finally {
+
+            }
+
         }
     });
 };
@@ -226,6 +217,20 @@ app.on('activate', () => {
 	}
 });
 
+ipcMain.on('get-app-version', (event, arg) =>{
+    event.sender.send('app-version', app.getVersion());
+});
+ipcMain.on('show-app-version', (event, arg) =>{
+    console.log("app version: " + app.getVersion());
+    dialog.showMessageBox({
+        type: 'info',
+        title: 'Version Information',
+        message: `Glyph Code Grabber v${app.getVersion()}`,
+        buttons: ["OK"],
+        icon: gcgIcon
+    });
+});
+
 // CORE Settings ---------------------------------------------------------------
 function setCoreSettings(event, arg){
     let encryptedData = encryptData(undefined, {value: arg.value});
@@ -241,23 +246,22 @@ function setCoreSettings(event, arg){
 ipcMain.on('set-core-settings', setCoreSettings);
 
 function getCoreSettings(event, arg){
-    fs.readFile(coreSettingsLoc, (err, dat) => {
-        if(err){
-            console.error(err);
+    checkFile(coreSettingsLoc, (err) => {
+        if(err) {
+            fs.writeFileSync(coreSettingsLoc, coreSettings);
         }
-        else{
-            let decryptedData = decryptData(undefined, {value: dat});
-            if(arg && arg.callback){
-                arg.callback(decryptedData);
-            }
+        getEncryptedData(coreSettingsLoc, (err, dat) => {
+            if(err) console.error(err);
             else{
-                if(event != 0){
-                    event.sender.send('send-core-settings', decryptedData);
+                if(arg && arg.callback){
+                    arg.callback(dat);
                 }
-                return decryptedData;
+                else{
+                    if(event != undefined) event.sender.send('send-core-settings', dat);
+                    return dat;
+                }
             }
-        }
-
+        });
     });
 }
 ipcMain.on('get-core-settings', getCoreSettings);
@@ -271,6 +275,30 @@ function resetCoreSettings(event, arg){
     setCoreSettings(0, {value: JSON.stringify(blankSettings)});
 }
 ipcMain.on('reset-core-settings', resetCoreSettings);
+
+/**
+ * Checks the directory and if it does not exists, it makes it for you
+ * @param  {Path|String} dir The path you would like to
+ * @return {}     [description]
+ */
+function checkDir(dir){
+    try {
+        fs.accessSync(dir, fs.constants.F_OK);
+    } catch (e) {
+        return fs.mkdirSync(dir);
+    } finally {
+
+    }
+}
+
+function checkFile(dir, callback){
+    fs.access(dir, fs.constants.F_OK, (err) => {
+        if(err){
+            if(callback) callback(err);
+        }
+        if(callback) callback();
+    });
+}
 
 // LOCATION INTERRACTIONS -------------------------------------------------------
 
@@ -290,7 +318,18 @@ var GCGrabber = require('../backend_modules/GCGrabber.js');
 
 ipcMain.on('grab-code', (event, arg) => {
     GCGrabber.codeGrab(arg.platform, arg.numCodes, storedCodesLoc, (codes, err) =>{
-        event.sender.send('grabbed-codes', {"codes": codes});
+        let stringCodes = '';
+        codes.forEach(function(code, i){
+            stringCodes = stringCodes+code+'\n';
+            if(typeof arg.user === "undefined"){
+                AssignCodes.addUserToDict({id:'N/A', username:'N/A'}, code, assignedCodesLoc, (err, prevCode) =>{
+                    if(err){}
+                });
+            }
+
+        });
+
+        event.sender.send('grabbed-codes', {"codes": stringCodes.trim()});
     });
 });
 
@@ -302,12 +341,34 @@ ipcMain.on('append-codes', (event, arg) => {
             if(err){throw err;return;}
             codez[i] = ln.trim();
         });
-        GCGrabber.appendCodes(arg.platform, codez, storedCodesLoc, (status) => {
+        let finalCodez = [];
+        codez.forEach(function(el, i){
+            if( ! AssignCodes.checkCodesDict(el, assignedCodesLoc) ) finalCodez.push(el);
+        });
+        GCGrabber.appendCodes(arg.platform, finalCodez, storedCodesLoc, (status) => {
             event.sender.send('append-codes-success', status);
         });
     });
 
 });
+
+ipcMain.on('append-codes-all', (event, arg) => {
+    let codez = [];
+    arg.locations.forEach(function(el){
+        fs.readFile(el, (err, text) => {
+            if(err) throw err;
+            text.toString().split('\n').forEach( (ln, i) => {
+                if(err){throw err;return;}
+                codez[i] = ln.trim();
+            });
+            GCGrabber.appendCodes(arg.platform, codez, storedCodesLoc, (status) => {
+                event.sender.send('append-codes-success', status);
+            });
+        });
+    });
+
+});
+
 ipcMain.on('clear-codes', (event, arg) => {
     GCGrabber.clearCodes(arg.platform, storedCodesLoc, (status) => {
         event.sender.send('codes-clear-success', status);
@@ -333,7 +394,8 @@ const createPopup = (filename) => {
         maxWidth: 400,
         autoHideMenuBar: true,
         backgroundColor: '#3B414F',
-        icon: gcgIcon
+        icon: gcgIcon,
+        modal: true,
     });
     popup.loadURL(`file://${__dirname}/${filename}.html`);
 
@@ -348,34 +410,39 @@ const createPopup = (filename) => {
     });
 }
 
-const newWebView = (event, arg) => {
+const cheerio = require('cheerio')
+
+function newWebView (event, arg) {
     console.log('Opening a browser window.');
     browser = new BrowserWindow({
         parent: mainWindow,
+        modal: false,
         width: 600,
 		height: 800,
         minHeight: 730,
 		minWidth: 350,
         autoHideMenuBar: true,
         backgroundColor: '#3B414F',
-        icon: gcgIcon
+        icon: gcgIcon,
+        webPreferences: {
+            sandbox: true,
+            webviewTag: false,
+            allowRunningInsecureContent: true
+        }
     });
-    JSDOM.fromFile(`${__dirname}/webview.html`).then(dom => {
-        const document = dom.window.document;
-        const bodyEl = document.body; // implicitly created
-        bodyEl.innerHTML = `<webview id="webview" src="${arg.url}"></webview>`;
-        // console.log(dom.serialize());
-        fs.writeFile(`${__dirname}/webview.html`, dom.serialize(), (err) => {
-            if(err){
-                throw err;
-            }
-            else{
-                console.log('Changed the URL');
-                browser.loadURL(`file://${__dirname}/webview.html`);
-            }
-        });
-        console.log(bodyEl);
-    }).catch(console.log);
+    fs.readFile(`${__dirname}/webview.html`, (err, dom) => {
+        if (err) throw err;
+
+        var $ = cheerio.load(dom);
+        $('webview').attr('src', arg.url);
+        console.log($.html());
+
+        fs.writeFile(`${__dirname}/webview.html`, $.html(), (err) => {
+            if (err) throw err;
+            // else browser.loadURL(`file://${__dirname}/webview.html`);
+        })
+    });
+    browser.loadURL(arg.url);
 
 
 
@@ -383,7 +450,8 @@ const newWebView = (event, arg) => {
 		// Dereference the window object, usually you would store windows
 		// in an array if your app supports multi windows, this is the time
 		// when you should delete the corresponding element.
-		browser = null;
+        browser = null;
+
 	});
     browser.on('ready', () => {
 
@@ -413,7 +481,7 @@ var gcgAutoLauncher = new autoLaunch({
     name: 'Glyph_Code_Grabber'
 });
 function autoLauncher(event, arg){
-    if(arg.enabled){
+    if(arg.enabled === true){
         gcgAutoLauncher.enable()
         .then( function(){
             console.log('Launch on Start Enabled!');
@@ -437,36 +505,22 @@ function autoLauncher(event, arg){
 }
 ipcMain.on('auto-launch', autoLauncher);
 
-gcgAutoLauncher.isEnabled()
-.then(function(isEnabled){
-    if(isEnabled){
-        return;
-    }
-    gcgAutoLauncher.enable();
-})
-.catch(function(err){
-    // handle error
-});
+// gcgAutoLauncher.isEnabled()
+// .then(function(isEnabled){
+//     if(isEnabled){
+//         return;
+//     }
+//     gcgAutoLauncher.enable();
+// })
+// .catch(function(err){
+//     // handle error
+// });
 
 // Localized Server ------------------------------------------------------------ Localized Server
 function handleRequest(req, res) {
     let indexOfQuery = 0;
     if(req.url.includes('?')){
         indexOfQuery = req.url.indexOf('?');
-    }
-
-    if(req.url.includes('/wurl')){
-        let query = queryString.parse(req.url.substr(indexOfQuery));
-        bLauncher(query.hurl__, {browser: ["chrome", "firefox"]}, function(e, browser){
-            if(e){
-                return console.log(e);
-            }
-            browser.on('stop', function(code){
-
-            console.log( 'Browser closed with exit code:', code );
-
-            });
-        });
     }
 
     // if the request if for discord auth
@@ -549,17 +603,16 @@ function handleRequest(req, res) {
      * If there is one, then we should check what the return data is.
      */
 
-    else{
+    else if(req.url.includes('/twitterauth')){
         let query = req.url.substr(1);
         var tokens = queryString.parse(query);
         if(tokens.oauth_token){
-            fs.readFile(twitDataLoc, (err, data) => {
+            getEncryptedData(twitDataLoc, (err, data) => {
                 if(err) throw err;
-                let dat = JSON.parse(decryptData(undefined, {value: data}));
+                let dat = JSON.parse(data);
                 dat.verifier = tokens.oauth_verifier;
-                dat = JSON.stringify(dat)
-                let dec = encryptData(undefined, {value: dat});
-                fs.writeFile(twitDataLoc, dec, (err) => {
+                let send = JSON.stringify(dat)
+                setEncryptedData(twitDataLoc, send, (err) => {
                     if(err) throw err;
                     console.log('Saved Twitter Data... Proceeding to final step.');
                     getTwitAccessTokens();
@@ -578,7 +631,8 @@ function handleRequest(req, res) {
     			fs.createReadStream(file).pipe(res);
     			return;
     		}
-    		res.writeHead(404);
+    		res.writeHead(404);dd
+
     		res.write('Finshed! You can close this tab now.');
     		res.end();
     	});
@@ -611,7 +665,7 @@ function getRegList(event){
         console.log('retrieved list... Sending it now.');
         let list = JSON.parse(reg_list);
         // console.log(JSON.stringify(list));
-        event.sender.send('send-reg-list', {"list": JSON.stringify(list)});
+        event.sender.send('send-reg-list', {"list": list});
     });
 }
 ipcMain.on('get-reg-list', getRegList);
@@ -619,9 +673,79 @@ ipcMain.on('get-reg-list', getRegList);
 
 // Twitter API data ------------------------------------------------------------ Twitter API data
 var twitter;
+let twitterCon = '0IxvGU3ZW5ui4WOOSns1aBCYf';
+let twitterConSec = 'T2YUYViTBCUPWkmtVBLSvm15BTF6H4Pd9gvvr4PihSuJKV88Ub';
+function checkTwitterConfig(){
+    // Twitter data json init
+	fs.access(twitDataLoc, fs.constants.F_OK, (err) => {
+		if (err) {
+			let twitData = {
+				consumer_key: twitterCon,
+				consumer_secret: twitterConSec,
+				request_token: '',
+				request_secret: '',
+				verifier: '',
+				access_token: '',
+				access_secret: ''
+			}
+			var dat = JSON.stringify(twitData);
+			setEncryptedData(twitDataLoc, dat, (err) => {
+				if (err) {
+					console.log(err);
+					fs.unlink(twitDataLoc, (err) => {
+						if (err) throw err;
+						console.log('Removed the file I just tried to make.');
+					});
+					throw err;
+                    return;
+				}
+				console.log('Made the new file')
+			});
+		}
+		console.log('Twitter Data file found! Loading now...');
+
+		getEncryptedData(twitDataLoc, (err, data) => {
+            if(err) throw err;
+			if (data.access_token && data.access_secret) {
+				connectTwitter();
+			}
+		});
+	});
+}
+
+function mkTwitterCfg(){
+    fs.access(twitDataLoc, fs.constants.F_OK, (err) => {
+        if(err){
+            let twitData = {
+                consumer_key: twitterCon,
+                consumer_secret: twitterConSec,
+                request_token: '',
+                request_secret: '',
+                verifier: '',
+                access_token: '',
+                access_secret: ''
+            };
+            setEncryptedData(twitDataLoc, JSON.stringify(twitData), (err)=>{
+                if(err){
+
+                }
+                else{
+
+                }
+
+            });
+        }
+        else{
+            console.log('twitter data file found!');
+        }
+    });
+}
+
+ipcMain.on('make-data-twch', mkTwitchCfg);
 
 ipcMain.on('get-twi-keys', (event) => {
-    getEncryptedData(twitDataLoc, (dat) => {
+    getEncryptedData(twitDataLoc, (err, dat) => {
+        if(err) throw err;
         let parsedDat = JSON.parse(dat);
         twitter = new twitterAPI({
             consumerKey: parsedDat.consumer_key,
@@ -633,7 +757,8 @@ ipcMain.on('get-twi-keys', (event) => {
 });
 
 function getTwitData(event, arg) {
-    getEncryptedData(twitDataLoc, (decryptedDat) => {
+    getEncryptedData(twitDataLoc, (err, decryptedDat) => {
+        if(err) throw err;
         if(event != undefined){
             event.sender.send( 'send-data-twit',  decryptedDat);
         }
@@ -648,7 +773,7 @@ ipcMain.on('get-data-twit', getTwitData);
 
 function setTwitData(event, arg) {
     let dat = encryptData(undefined, {value: arg.config});
-    fs.writeFile(twitDataLoc, dat, (err) => {
+    setEncryptedData(twitDataLoc, arg.config, (err) => {
         if (err) throw err;
         else{
             console.log('Saved Twitter Data!');
@@ -669,11 +794,13 @@ ipcMain.on('get-access_token-twit', (event, arg) => {
                 let dat = JSON.parse(data);
                 dat.request_token = requestToken
                 dat.request_secret = requestTokenSecret
+                console.log(dat);
                 console.log('I am sending the twitter config');
                 event.sender.send('send-access_token-twit', dat);
                 dat = JSON.stringify(dat);
-                let dec = encryptData(undefined, {value: dat});
-                setTwitData(undefined, {config: dec});
+                setEncryptedData(twitDataLoc, dat, (err) => {
+                    if(err) throw err;
+                });
             }});
         }
     });
@@ -720,41 +847,36 @@ function twitVerify(event){
 ipcMain.on('verify-twit-auth', twitVerify);
 
 function clearTwitterData(event){
-    fs.readFile(initDataLoc, (err, data) => {
-        var jsn = JSON.parse(decryptData(undefined, {value: data}));
-        var twitData = {
-            consumer_key:     jsn.consumer_key,
-            consumer_secret:  jsn.consumer_secret,
-            request_token:    '',
-            request_secret:   '',
-            verifier:         '',
-            access_token:     '',
-            access_secret:    ''
+    var twitData = {
+        consumer_key:     twitterCon,
+        consumer_secret:  twitterCon,
+        request_token:    '',
+        request_secret:   '',
+        verifier:         '',
+        access_token:     '',
+        access_secret:    ''
+    }
+    let dat = JSON.stringify(twitData);
+    setEncryptedData(twitDataLoc, dat, (err) => {
+        if (err) {
+            console.log(err);
+            throw err;
         }
-        let dat = JSON.stringify(twitData);
-        let dec = encryptData(undefined, {value: dat});
-        fs.writeFile(twitDataLoc, dec, (err) => {
-            if (err) {
-                console.log(err);
-                throw err;
-            }
-            console.log('Twitter Data Reset')
-        });
-    });
+        console.log('Twitter Data Reset')
+    })
 }
 ipcMain.on('clearTwitterAuth', clearTwitterData);
 ipcMain.on('reset-twit-data', clearTwitterData);
 
 function connectTwitter(){
-    fs.readFile(twitDataLoc, (err, data) => {
-        if(err) throw err;
+    getEncryptedData(twitDataLoc, (err, data) => {
+        if(err) return console.log(err);
         else{
-            let dat = JSON.parse(decryptData(undefined, {value: data}));
             T = new twit({
-                consumer_key:         dat.consumer_key,
-                consumer_secret:      dat.consumer_secret,
-                access_token:         dat.access_token,
-                access_token_secret:  dat.access_secret,
+                consumer_key:         data.consumer_key,
+                consumer_secret:      data.consumer_secret,
+                access_token:         data.access_token,
+                access_token_secret:  data.access_secret,
                 strictSSL: true
             });
             T.get('account/verify_credentials', {
@@ -787,7 +909,8 @@ ipcMain.on('twitter-post', twitterPost);
 
 // FOR TWITCH.TV ---------------------------------------------------------------
 function getTwitchCfg(event, arg){
-    getEncryptedData(twchDataLoc, (dat) => {
+    getEncryptedData(twchDataLoc, (err, dat) => {
+        if(err) throw err;
         if(event != undefined){
             event.sender.send( 'loaded-data-twch',  decryptedDat);
         }
@@ -982,11 +1105,86 @@ ipcMain.on('save-data-dis', (event, arg) => {
     });
 });
 ipcMain.on('load-data-dis', (event, arg) => {
-    getEncryptedData(disDataLoc, (dat) => {
+    getEncryptedData(disDataLoc, (err, dat) => {
+        if(err) throw err;
         event.sender.send( 'loaded-data-dis', dat);
         console.log('Loaded Discord Data!');
     });
 });
+
+function mkDiscordCfc(){
+    let discord_config = {
+        "client_id":     undefined,
+        "token":         undefined,
+        "sub_role":      undefined,
+        "time_as_sub":   undefined,
+        "options": {
+            "del_comm":  false,
+            "auto_conn": false
+        }
+    };
+    fs.access(disDataLoc, fs.constants.F_OK, (err) => {
+        if(err){
+            fs.writeFile(disDataLoc, discord_config, (err) =>{
+                if(err) throw err;
+            });
+        }
+        else{
+            console.log('Discord data file found!');
+        }
+    });
+}
+
+ipcMain.on('addUserToDict', (event, arg) => {
+    AssignCodes.addUserToDict(arg.user, arg.code, assignedCodesLoc, (err, code) => {
+        if(err){
+            event.sender.send('addedUserToDict', {
+                "found": false,
+                "err": err,
+                "code": code
+            });
+        }
+        else{
+            console.log('Added user to Dict.');
+            event.sender.send('addedUserToDict', {
+                "found": true,
+                "err": undefined,
+                "code": undefined
+            });
+        }
+    });
+});
+ipcMain.on('checkUserDict', (event, arg) => {
+    AssignCodes.checkUserDict(arg.user, assignedCodesLoc, (err, code) => {
+        if(err){
+            event.sender.send('checkedUserDict', {
+                "found": false,
+                "err": err,
+                "code": code
+            });
+        }
+        else{
+            console.log('Added user to Dict.');
+            event.sender.send('checkedUserDict', {
+                "found": false,
+                "err": undefined,
+                "code": undefined
+            });
+        }
+    });
+});
+ipcMain.on('clearAssignedCodes', (event, arg) => {
+    AssignCodes.clearAssignedCodes(assignedCodesLoc, (err, code) => {
+        if(err){
+            event.sender.send('clearedAssignedCodes', false);
+        }
+        else{
+            console.log('Added user to Dict.');
+            event.sender.send('clearedAssignedCodes', true);
+        }
+    });
+});
+
 
 
 // FOR Sheets API -----------------------------------------------------
@@ -997,22 +1195,44 @@ const SCOPES = ['https://www.googleapis.com/auth/spreadsheets.readonly'];
 
 
 // Load client secrets from a local file and encrypt them.
-// fs.readFile('src/lib/credentials.json', (err, content) => {
-// 	if (err) return console.log('Error loading client secret file:', err);
-// 	// Authorize a client with credentials, then call the Google Sheets API.
-//     setEncryptedData(sheetsDataLoc, '' + content, (err) => {
-//         if(err) throw err;
-//         else{
-//             // sheetsAuthorize(JSON.parse(content), pullFromSheet);
-//             getSheetsConfig();
-//         }
-//     });
-// });
+
+// Authorize a client with credentials, then call the Google Sheets API.
+function mkGsheetsCred(){
+    fs.access(sheetsDataLoc, fs.constants.F_OK, (err) => {
+        if(err){
+            console.log(err);
+            var credentials = {
+            	"installed": {
+            		"client_id": "1022617838269-4u3v74c1qnccs2ctvqd70duskmh3338e.apps.googleusercontent.com",
+            		"project_id": "glyph-code-grabb-1534541097751",
+            		"auth_uri": "https://accounts.google.com/o/oauth2/auth",
+            		"token_uri": "https://www.googleapis.com/oauth2/v3/token",
+            		"auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+            		"client_secret": "H8VwEABAP8ROL5ALiEEq_Tmo",
+            		"redirect_uris": ["urn:ietf:wg:oauth:2.0:oob", "http://localhost:8888/sheets-passport"]
+            	}
+            }
+            setEncryptedData(sheetsDataLoc, JSON.stringify(credentials), (err) => {
+                if(err) return console.log(err);
+                else{
+                    console.log('Created the sheets data.');
+                    // sheetsAuthorize(JSON.parse(content), pullFromSheet);
+                    // getSheetsConfig();
+                }
+            });
+        }
+        else{
+            console.log('Found Google Sheets App Credentials...');
+        }
+    });
+}
+
 var oAuth2Client;
 const sheetsOauthLoc = `${__dirname}\\bin\\gs_oAuth2.dat`;
 
 function getSheetsConfig(callback){
-    getEncryptedData(sheetsDataLoc, (content) => {
+    getEncryptedData(sheetsDataLoc, (err, content) => {
+        if(err) return mkGsheetsCred();
         console.log('Starting GSheets Auth...');
         sheetsAuthorize(JSON.parse(content), (oAuth2Client) => {
             return;
@@ -1075,7 +1295,7 @@ function oauthAdd(code){
 
 function clearGSheetsToken(event, arg) {
     fs.unlink(sheetsOauthLoc, (err) => {
-        if (err) throw err;
+        if (err) console.log('Sheets OAuth was not authed yet.');
     })
 }
 ipcMain.on('clear-gsheets-token', clearGSheetsToken);
@@ -1085,7 +1305,8 @@ ipcMain.on('clear-gsheets-token', clearGSheetsToken);
  * @param {google.auth.OAuth2} auth The authenticated Google OAuth client.
  */
 function pullFromSheet(event, arg) {
-    getEncryptedData(sheetsOauthLoc, (content) => {
+    getEncryptedData(sheetsOauthLoc, (err, content) => {
+        if(err) throw err;
         let AuthClientData = JSON.parse(content);
 
         let AuthClient = new google.auth.OAuth2(AuthClientData._clientId, AuthClientData._clientSecret, AuthClientData.redirectUri);
@@ -1165,4 +1386,4 @@ function pullFromSheet(event, arg) {
     });
 
 }
-ipcMain.on('gsheets-extract', pullFromSheet)
+ipcMain.on('gsheets-extract', pullFromSheet);

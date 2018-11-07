@@ -406,6 +406,15 @@ a.regular-link:hover{
     transition-duration: 0.3s;
 }
 
+a.hidden-link{
+    text-decoration: none;
+    transition-duration: 0.3s;
+    color: #2c313c;
+}
+a.hidden-link:hover{
+    text-decoration: none;
+    transition-duration: 0.3s;
+}
 
 /* ANIMATIONS */
 .hover-spin{

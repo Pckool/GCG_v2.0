@@ -1,3 +1,4 @@
 node_modules
 out
 src/lib
+src/bin/gs_oAuth2.dat

@@ -2,7 +2,7 @@ const ipcRenderer_dis = new require('electron').ipcRenderer;
 const Discord = require('discord.js');
 var dis_client = new Discord.Client();
 var guild;
-var assignedCodes = `${__dirname}/lib/assignedcodes.json`;
+// var assignedCodes = `${__dirname}/lib/assignedcodes.json`;
 var discordLoggedIn = false;
 
 
@@ -30,7 +30,7 @@ dis_client.on('message', msg => {
                                 msg.author.send("Here's your assigned code: " + prevCode);
                             }
                             else{
-                                pcCodeGrab_single( (code) => {
+                                pcCodeGrab_single(msg.author, (code) => {
                                     addUserToDict(msg.author, code, (err, prevCode) => {
                                         console.log('New user grabbed a code! \nname: ' + msg.author + '\ncode:' + code);
                                         msg.reply('Thanks for subscribing! I\'ll send you a glyph code :heart:');
@@ -53,7 +53,7 @@ dis_client.on('message', msg => {
                                 msg.author.send("Here's your assigned code: " + prevCode);
                             }
                             else{
-                                ps4CodeGrab_single( (code) => {
+                                ps4CodeGrab_single(msg.author, (code) => {
                                     addUserToDict(msg.author, code, (err, prevCode) => {
                                         console.log('New user grabbed a code! \nname: ' + msg.author + '\ncode:' + code);
                                         msg.reply('Thanks for subscribing! I\'ll send you a glyph code :heart:');
@@ -75,7 +75,7 @@ dis_client.on('message', msg => {
                                 msg.author.send("Here's your assigned code: " + prevCode);
                             }
                             else{
-                                xb1CodeGrab_single( (code) => {
+                                xb1CodeGrab_single(msg.author, (code) => {
                                     addUserToDict(msg.author, code, (err, prevCode) => {
                                         console.log('New user grabbed a code! \nname: ' + msg.author + '\ncode:' + code);
                                         msg.reply('Thanks for subscribing! I\'ll send you a glyph code :heart:');
@@ -89,6 +89,9 @@ dis_client.on('message', msg => {
                             }
                         });
                     }
+                }
+                else{
+                    msg.reply(`Sorry, you need to be a member of ${cfg.sub_role} to recieve a glyph code from me.`);
                 }
 
             });
@@ -123,7 +126,7 @@ dis_client.on('message', msg => {
                                     msg.reply("Here's your PC code: " + prevCode);
                                 }
                                 else{
-                                    pcCodeGrab_single( (code) => {
+                                    pcCodeGrab_single(msg.author, (code) => {
                                         addUserToDict(msg.author, code, (err, prevCode) => {
                                             msg.reply("Here's your PC code: " + code);
                                             console.log('New user grabbed a code! \nname: ' + msg.author + '\ncode:' + code);
@@ -142,7 +145,7 @@ dis_client.on('message', msg => {
                                     msg.reply("Here's your PlayStation 4 code: " + prevCode);
                                 }
                                 else{
-                                    ps4CodeGrab_single( (code) => {
+                                    ps4CodeGrab_single(msg.author, (code) => {
                                         addUserToDict(msg.author, code, (err, prevCode) => {
                                             msg.reply("Here's your PlayStation 4 code: " + code);
                                             console.log('New user grabbed a code! \nname: ' + msg.author + '\ncode:' + code);
@@ -161,7 +164,7 @@ dis_client.on('message', msg => {
                                     msg.reply("Here's your Xbox One code: " + prevCode);
                                 }
                                 else{
-                                    xb1CodeGrab_single( (code) => {
+                                    xb1CodeGrab_single(msg.author, (code) => {
                                         addUserToDict(msg.author, code, (err, prevCode) => {
                                             msg.reply("Here's your Xbox One code: " + code);
                                             console.log('New user grabbed a code! \nname: ' + msg.author + '\ncode:' + code);
@@ -175,14 +178,12 @@ dis_client.on('message', msg => {
                             });
                         }
                     }
-                    // Like this, the name given needs to EXACTLY match the name of the group.
-                    // I should change this so that the input field is a dropdown of the different roles on the server
-                    // (this would probably be the best option...)
+                    else{
+                        msg.reply(`Sorry, you need to be a member of ${cfg.sub_role} to recieve a glyph code from me.`);
+                    }
                 });
-
             }
         }
-
         // if the user just wants to chat
         if(msg.content.includes('*chat')){
 
@@ -266,11 +267,8 @@ function saveDiscordConfig(callback){
  * @param  {Function} callback a callack function
  */
 function loadDiscordConfig(callback){
-    ipcRenderer_dis.send('load-data-dis');
-
-    ipcRenderer_dis.once('loaded-data-dis', (event, arg) => {
+    getDiscordConfig( (discord_config) => {
         // Finish loading
-        let discord_config = JSON.parse(arg);
         if($('#client_id').length){
             $('#client_id').val(discord_config.client_id);
             $('#token').val(discord_config.token);
@@ -280,8 +278,7 @@ function loadDiscordConfig(callback){
             $('#del-comm').prop('checked', discord_config.options.del_comm);
             $('#auto-conn').prop('checked', discord_config.options.auto_conn);
         }
-        if(callback)
-            callback(discord_config);
+        if(callback) callback(discord_config);
     });
 }
 
@@ -294,9 +291,16 @@ function getDiscordConfig(callback){
 
     ipcRenderer_dis.once('loaded-data-dis', (event, arg) => {
         // Finish loading
-        let discord_config = JSON.parse(arg);
-        if(callback)
-            callback(discord_config);
+        try{
+            let discord_config = JSON.parse(arg);
+            if(callback)
+                callback(discord_config);
+        }
+        catch(err){
+            resetDiscordConfig();
+            callback({});
+        }
+
     });
 }
 
@@ -416,7 +420,6 @@ function checkVal(){
         $('#server_connect').addClass('btn-disabled');
         console.log('Not Enough because there is litterally nothing in here.');
     }
-
 }
 function checkConnectBtns(){
     console.log('Checking discord the buttons...');
@@ -445,10 +448,11 @@ function checkConnectBtns(){
     }
 }
 
-function pcCodeGrab_single(callback){
+function pcCodeGrab_single(user, callback){
     ipcRenderer.send('grab-code',{
         "platform": "pc",
-        "numCodes": 1
+        "numCodes": 1,
+        "user": user
     });
     ipcRenderer.once('grabbed-codes', (event, codes) => {
         if(callback){
@@ -458,10 +462,11 @@ function pcCodeGrab_single(callback){
     });
 }
 
-function ps4CodeGrab_single(callback){
+function ps4CodeGrab_single(user, callback){
     ipcRenderer.send('grab-code',{
         "platform": "ps4",
-        "numCodes": 1
+        "numCodes": 1,
+        "user": user
     });
     ipcRenderer.once('grabbed-codes', (event, codes) => {
         if(callback){
@@ -471,10 +476,11 @@ function ps4CodeGrab_single(callback){
     });
 }
 
-function xb1CodeGrab_single(callback){
+function xb1CodeGrab_single(user, callback){
     ipcRenderer.send('grab-code',{
         "platform": "xb1",
-        "numCodes": 1
+        "numCodes": 1,
+        "user": user
     });
     ipcRenderer.once('grabbed-codes', (event, codes) => {
         if(callback){
@@ -490,90 +496,133 @@ function xb1CodeGrab_single(callback){
  * This fuction adds a user to a dictionary of users once they recieve a code.
  * If they are already in the dictionary, it throws an error object and the code assigned to the user.
  *
- * @param {Object} user {User object definded by Discord.js}
+ * @param {Object} user {User object definded by Discord.js or otherwise; Must have 'id' and 'username' properties}
  * @param {Strng} code {A string with the code that has been assigned to the user}
  * @param {function} callback {This is the callback function you want to call after completion}
  */
 function addUserToDict(user, code, callback){
-    // if the assignedCodes file has been set
-    fs.access(assignedCodes, fs.constants.F_OK, (err) => {
-        let newData = {};
-        if(err){
-            newData[user.id] = {};
-            newData[user.id].code = code;
-            newData[user.id].username = user.username;
-            fs.writeFile(assignedCodes, JSON.stringify(newData), (err) => {
-                if(err){
-                    console.log(err);
-                }
-                else{
-                    console.log('No assignedCodes file was set. I made one for you!');
-                    callback();
-                }
-            });
-        }
-        else{
-            // get the list of users
-            fs.readFile(assignedCodes, (err, data) => {
-                let newData = JSON.parse(data);
-                // if the user is not in the dictionary
-                if(!newData[user.id]){
-                    // append the new user and code to the list
-                    newData[user.id] = {};
-                    newData[user.id].code = code;
-                    newData[user.id].username = user.username;
-                    // save the new list
-                    fs.writeFile(assignedCodes, JSON.stringify(newData), (err) => {
-                        if(err) throw err;
-                        console.log('New user added to the list! Here is the list now:\n');
-                        console.log(newData);
-                        // return success/callback
-                        callback();
-                    });
-                }
-                else{
-                    console.log('This is the Users code: ' +  newData[user.id].code);
-                    // if the user is already in the dict, then return the code assigned to the user.
-                    callback(Error('This user already has a code assigned'), newData[user.id].code);
-                }
-            });
-        }
+    ipcRenderer.send('addUserToDict', {
+        user: user,
+        code: code
     });
+    ipcRenderer.once('addedUserToDict', (event, arg) => {
+        if(arg.err && arg.code) callback(arg.err, arg.code);
+        else callback();
+    });
+    // if the assignedCodes file has been set
+    // fs.access(assignedCodes, fs.constants.F_OK, (err) => {
+    //     let newData = {};
+    //     if(err){
+    //         let createData = {assignments: []}
+    //         newData.user_id = user.id;
+    //         newData.code = code;
+    //         newData.username = user.username;
+    //
+    //         createData.assignments.push(newData);
+    //         fs.writeFile(assignedCodes, JSON.stringify(newData), (err) => {
+    //             if(err){
+    //                 console.log(err);
+    //             }
+    //             else{
+    //                 console.log('No assignedCodes file was set. I made one for you!');
+    //                 callback();
+    //             }
+    //         });
+    //     }
+    //     else{
+    //         // get the list of users
+    //         fs.readFile(assignedCodes, (err, data) => {
+    //             let parsedData = JSON.parse(data);
+    //
+    //             let userExists = false;
+    //             let usr = {};
+    //             // if the user is not in the dictionary
+    //             parsedData.assignments.forEach(function(el, i){
+    //                 if(el.user_id === user.id){
+    //                     userExists = true;
+    //                     usr = el;
+    //                 }
+    //             });
+    //             if(! userExists){
+    //                 // append the new user and code to the list
+    //                 newData.user_id = user.id;
+    //                 newData.code = code;
+    //                 newData.username = user.username;
+    //
+    //                 parsedData.assignments.push(newData);
+    //                 // save the new list
+    //                 fs.writeFile(assignedCodes, JSON.stringify(newData), (err) => {
+    //                     if(err) throw err;
+    //                     console.log('New user added to the list! Here is the list now:\n');
+    //                     console.log(newData);
+    //                     // return success/callback
+    //                     callback();
+    //                 });
+    //             }
+    //             else{
+    //                 console.log('This is the Users code: ' +  usr.code);
+    //                 // if the user is already in the dict, then return the code assigned to the user.
+    //                 callback(Error('This user already has a code assigned'), usr.code);
+    //             }
+    //         });
+    //     }
+    // });
 }
 
 function checkUserDict(user, callback){
-    fs.access(assignedCodes, fs.constants.F_OK, (err) => {
-        let newData = {};
-        if(err){
-            console.log(err);
-        }
-        else{
-            // get the list of users
-            fs.readFile(assignedCodes, (err, data) => {
-                let newData = JSON.parse(data);
-                // if the user is not in the dictionary
-                if(!newData[user.id]){
-                    callback();
-                }
-                else{
-                    console.log('This is the Users code: ' +  newData[user.id].code);
-                    // if the user is already in the dict, then return the code assigned to the user.
-                    callback(Error('the user already has a code registered.'), newData[user.id].code);
-                }
-            });
-        }
+    ipcRenderer.send('checkUserDict', {
+        user: user
     });
+    ipcRenderer.once('checkedUserDict', (event, arg) => {
+        if(arg.err && arg.code) callback(arg.err, arg.code);
+        else callback();
+    });
+    // fs.access(assignedCodes, fs.constants.F_OK, (err) => {
+    //     let newData = {};
+    //     if(err){
+    //         console.log(err);
+    //     }
+    //     else{
+    //         // get the list of users
+    //         fs.readFile(assignedCodes, (err, data) => {
+    //             let newData = JSON.parse(data);
+    //             // if the user is not in the dictionary
+    //
+    //             let userExists = false;
+    //             let usr = {};
+    //             // if the user is not in the dictionary
+    //             parsedData.assignments.forEach(function(el, i){
+    //                 if(el.user_id === user.id){
+    //                     userExists = true;
+    //                     usr = el;
+    //                 }
+    //             });
+    //             if(!userExists){
+    //                 callback();
+    //             }
+    //             else{
+    //                 console.log('This is the Users code: ' +  usr.code);
+    //                 // if the user is already in the dict, then return the code assigned to the user.
+    //                 callback(Error('the user already has a code registered.'), usr.code);
+    //             }
+    //         });
+    //     }
+    // });
 }
 
 function clearAssignedCodes(){
-    fs.writeFile(assignedCodes, '{}', (err) => {
-        if(err){
-            console.error(err);
-        }
-        else{
-            console.log('Cleared the assigned glyph codes')
-        }
+    ipcRenderer.send('clearAssignedCodes');
+    ipcRenderer.once('clearedAssignedCodes', (event, arg) => {
+
     });
+    // fs.writeFile(assignedCodes, '{"assigned":[]}', (err) => {
+    //     if(err){
+    //         console.error(err);
+    //     }
+    //     else{
+    //         console.log('Cleared the assigned glyph codes')
+    //     }
+    // });
 }
 
 // discord connect buttons

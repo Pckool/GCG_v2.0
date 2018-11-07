@@ -1,6 +1,8 @@
 <div class="sub-cont toggle">
     <div class="top-bar" id="top-bar">
-        <div class="flex-spacer"></div>
+        <div class="flex-column">
+            <a href="" id="app-version" class="app-version hidden-link" ng-click="showVersion()">Application Info</a>
+        </div>
         <a class="x-icon far fa-times-circle fa-lg" href="#/!"></a>
     </div>
 
@@ -9,7 +11,7 @@
         <div class="flex-column pc-box">
             <div class="flex-row">
                 <label for="" class="">PC</label>
-                <i id="pc-input" class="sub-text flex-grow2">remaining: <i ng-model="pcLocation" id="pc-location"></i></i>
+                <i id="pc-input" class="sub-text flex-grow2">remaining: <i ng-model="pcLocation" id="pc-numcodes"></i></i>
             </div>
 
             <div class="flex-row margin-lr-1em">
@@ -26,7 +28,7 @@
         <div class="flex-column ps4-box">
             <div class="flex-row">
                 <label for="" class="">PlayStation 4</label>
-                <i id="ps4-input" class="sub-text flex-grow2">remaining: <i ng-model="ps4Location" id="ps4-location" class="sub-text"></i></i>
+                <i id="ps4-input" class="sub-text flex-grow2">remaining: <i ng-model="ps4Location" id="ps4-numcodes" class="sub-text"></i></i>
             </div>
 
             <div class="flex-row margin-lr-1em">
@@ -43,7 +45,7 @@
         <div class="flex-column xb1-box">
             <div class="flex-row">
                 <label for="" class="">Xbox One</label>
-                <i id="xb1-input" class="sub-text flex-grow2">remaining: <i ng-model="xb1Location" id="xb1-location" class="sub-text"></i></i>
+                <i id="xb1-input" class="sub-text flex-grow2">remaining: <i ng-model="xb1Location" id="xb1-numcodes" class="sub-text"></i></i>
             </div>
 
             <div class="flex-row margin-lr-1em">

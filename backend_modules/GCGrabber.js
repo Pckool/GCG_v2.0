@@ -6,13 +6,17 @@ import {dialog} from 'electron';
 (function(){
     // PREREQUISITES
     var fs = require('fs');
-    var jsdom = require("jsdom");
-    const { JSDOM } = jsdom;
-    const { window } = new JSDOM();
-    const { document } = (new JSDOM('')).window;
-    global.document = document;
+    // var jsdom = require("jsdom");
+    // const { JSDOM } = jsdom;
+    // const { window } = new JSDOM();
+    // const { document } = (new JSDOM('')).window;
+    // global.document = document;
+    //
+    // var $ = require('jquery')(window);
 
-    var $ = require('jquery')(window);
+    // function arrayContains(needle, arrhaystack){
+    //     return (arrhaystack.indexOf(needle) > -1);
+    // }
 
     var GCGrabber = {};
 
@@ -20,7 +24,7 @@ import {dialog} from 'electron';
 
     GCGrabber.codeGrab = function (platform, numCodes, storedCodesLoc, callback){
         // console.log('pc: ' + coreSettings.pc);
-        var codez = '';
+        var codez = [];
         var newList = '';
         let dataOBJ;
         if(platform === "pc"){
@@ -30,15 +34,15 @@ import {dialog} from 'electron';
                 dataOBJ = JSON.parse(data);
                 for (var i = 0; i < numCodes; i++) {
                     try{
-                        codez = codez + dataOBJ.pc.shift() + "\n";
+                        codez[i] = codez + dataOBJ.pc.shift() + "\n";
                     }catch(e){
                         dialog.showErrorBox('Ran out of Codes :(', 'Looks like you ran out of codes or something :( \n send this to TDefton: ' + e)
                         return;
                     }
                 }
-                fs.writeFile(storedCodesLoc, JSON.stringify(dataOBJ), (err) => {if (err) throw err;});
+                fs.writeFileSync(storedCodesLoc, JSON.stringify(dataOBJ, null, 4));
                 if(callback){
-                    callback(codez.trim());
+                    callback(codez);
                 }
             });
         }
@@ -48,32 +52,32 @@ import {dialog} from 'electron';
                 dataOBJ = JSON.parse(data);
                 for (var i = 0; i < numCodes; i++) {
                     try{
-                        codez = codez + dataOBJ.ps4.shift() + "\n";
+                        codez[i] = codez + dataOBJ.ps4.shift() + "\n";
                     }catch(e){
                         dialog.showErrorBox('Ran out of Codes :(', 'Looks like you ran out of codes or something :( \n send this to TDefton: ' + e)
                     }
                 }
-                fs.writeFile(storedCodesLoc, JSON.stringify(dataOBJ), (err) => {if (err) throw err;});
+                fs.writeFileSync(storedCodesLoc, JSON.stringify(dataOBJ, null, 4));
                 if(callback){
-                    callback(codez.trim());
+                    callback(codez);
                 }
             });
 
         }
-        else if(platform === "xb1" && coreSettings.xb1){
+        else if(platform === "xb1"){
             fs.readFile(storedCodesLoc, (err, data) => {
                 if(err) throw err;
                 dataOBJ = JSON.parse(data);
                 for (var i = 0; i < numCodes; i++) {
                     try{
-                        codez = codez + dataOBJ.xb1.shift() + "\n";
+                        codez[i] = codez + dataOBJ.xb1.shift() + "\n";
                     }catch(e){
                         dialog.showErrorBox('Ran out of Codes :(', 'Looks like you ran out of codes or something :( \n send this to TDefton: ' + e)
                     }
                 }
-                fs.writeFile(storedCodesLoc, JSON.stringify(dataOBJ), (err) => {if (err) throw err;});
+                fs.writeFileSync(storedCodesLoc, JSON.stringify(dataOBJ, null, 4));
                 if(callback){
-                    callback(codez.trim());
+                    callback(codez);
                 }
             });
 
@@ -98,13 +102,13 @@ import {dialog} from 'electron';
                 let concatCodes = dataOBJ.pc.concat(codez);
                 // used to ensure there are no duplicates
                 let uniqueCodes = [];
-                $.each(concatCodes, function(i, el){
-                    if($.inArray(el, uniqueCodes) === -1) uniqueCodes.push(el);
+                concatCodes.forEach(function(el, i){
+                    if( ! uniqueCodes.includes(el) ) uniqueCodes.push(el);
                 });
                 dataOBJ.pc = uniqueCodes;
 
                 // Write the new data
-                fs.writeFile(storedCodesLoc, JSON.stringify(dataOBJ), (err) => {
+                fs.writeFile(storedCodesLoc, JSON.stringify(dataOBJ, null, 4), (err) => {
                     if(err) throw err;
                     if(callback) callback();
                 });
@@ -121,13 +125,13 @@ import {dialog} from 'electron';
                 let concatCodes = dataOBJ.ps4.concat(codez);
                 // used to ensure there are no duplicates
                 let uniqueCodes = [];
-                $.each(concatCodes, function(i, el){
-                    if($.inArray(el, uniqueCodes) === -1) uniqueCodes.push(el);
+                concatCodes.forEach(function(el, i){
+                    if( ! uniqueCodes.includes(el) ) uniqueCodes.push(el);
                 });
                 dataOBJ.ps4 = uniqueCodes;
 
                 // Write the new data
-                fs.writeFile(storedCodesLoc, JSON.stringify(dataOBJ), (err) => {
+                fs.writeFile(storedCodesLoc, JSON.stringify(dataOBJ, null, 4), (err) => {
                     if(err) throw err;
                     if(callback) callback();
                 });
@@ -143,13 +147,13 @@ import {dialog} from 'electron';
                 let concatCodes = dataOBJ.xb1.concat(codez);
                 // used to ensure there are no duplicates
                 let uniqueCodes = [];
-                $.each(concatCodes, function(i, el){
-                    if($.inArray(el, uniqueCodes) === -1) uniqueCodes.push(el);
+                concatCodes.forEach(function(el, i){
+                    if( ! uniqueCodes.includes(el) ) uniqueCodes.push(el);
                 });
                 dataOBJ.xb1 = uniqueCodes;
 
                 // Write the new data
-                fs.writeFile(storedCodesLoc, JSON.stringify(dataOBJ), (err) => {
+                fs.writeFile(storedCodesLoc, JSON.stringify(dataOBJ, null, 4), (err) => {
                     if(err) throw err;
                     if(callback) callback();
                 });
@@ -184,7 +188,7 @@ import {dialog} from 'electron';
                 message: "Are you sure you want to clear your codes?"
             }, (res) => {
                 if(res === 0) {
-                    fs.writeFile(storedCodesLoc, JSON.stringify(dataOBJ), (err) => {
+                    fs.writeFile(storedCodesLoc, JSON.stringify(dataOBJ, null, 4), (err) => {
                         if(err) throw err;
                         if(callback) callback('success');
                     });
@@ -211,7 +215,7 @@ import {dialog} from 'electron';
                     "ps4": [],
                     "xb1": []
                 }
-                fs.writeFile(storedCodesLoc, JSON.stringify(codesJSON), (err) => {
+                fs.writeFile(storedCodesLoc, JSON.stringify(codesJSON, null, 4), (err) => {
                     if(err){console.log('Couldn\'t create the codes storage.');}
                 });
             }

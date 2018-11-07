@@ -10,20 +10,17 @@ function populateList(){
     ipcRenderer.send('get-reg-list');
     ipcRenderer.once('send-reg-list', function(event, arg){
         console.log(arg.list);
-        let list = JSON.parse(arg.list);
         console.log('here is the list')
-        console.log(list);
-        for(var key in list){
-            console.log(key);
-            console.log(list[key]);
+        arg.list.assigned.forEach(function(el, i){
+            console.log(el);
 
             $('.reg-list').append(
                 `<div class="reg-list-item flex-row">`+
-                `<div class="reg-list-var">${list[key].username}</div>`+
-                `<div class="reg-list-var">${list[key].code}</div>`+
+                `<div class="reg-list-var">${el.username}</div>`+
+                `<div class="reg-list-var">${el.code}</div>`+
                 `</div>`
             );
-        }
+        });
 
     });
 }
