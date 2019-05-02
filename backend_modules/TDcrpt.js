@@ -43,7 +43,6 @@ import {dialog} from 'electron';
         });
     }
     TDcrpt.setEncryptedData = function (location, data, callback){
-        console.log('data I was set to encrypt: ' + data);
         let encryptedDat = TDcrpt.encryptData(undefined, {value: data});
         fs.writeFile(location, encryptedDat, (err) => {
             if (err) return callback(err);
@@ -53,12 +52,23 @@ import {dialog} from 'electron';
         });
     }
     TDcrpt.getEncryptedDataSync = function (location){
-        let res = fs.readFileSync(location);
+        try{
+            let dat = fs.readFileSync(location);
+            let decryptedDat = TDcrpt.decryptData(undefined, {value: dat});
+            return decryptedDat;
+        } catch(err){
+            throw err;
+        }
+
     }
     TDcrpt.setEncryptedDataSync = function (location, data){
-        console.log('data I was set to encrypt: ' + data);
-        let encryptedDat = TDcrpt.encryptData(undefined, {value: data});
-        let res = fs.writeFileSync(location, encryptedDat);
+        try{
+            let encryptedDat = TDcrpt.encryptData(undefined, {value: data});
+            fs.writeFileSync(location, encryptedDat);
+        } catch(err){
+            throw err;
+        }
+
     }
 
     if(typeof module === "object" && module.exports){

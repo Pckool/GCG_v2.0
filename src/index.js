@@ -28,6 +28,7 @@ var twitDataLoc;      // Directory of the twitter data file
 var disDataLoc;
 var twchDataLoc;
 var sheetsDataLoc;
+var slDataLoc;
 
 var assignedCodesLoc;
 var storedCodesLoc;
@@ -65,12 +66,12 @@ const createWindow = () => {
 	// Create the browser window.
 	mainWindow = new BrowserWindow({
 		width: 600,
-		height: 800,
-        minHeight: 760,
+		height: 590,
+        minHeight: 590,
 		minWidth: 350,
 		maxWidth: 1020,
 		backgroundColor: '#3B414F',
-		frame: true,
+		frame: false,
 		autoHideMenuBar: true,
 		icon: gcgIcon
 	});
@@ -153,22 +154,24 @@ const createWindow = () => {
     disDataLoc = `${binLoc}\\dis.dat`;
     twchDataLoc = `${binLoc}\\twch.dat`;
     sheetsDataLoc = `${binLoc}\\sheets.dat`;
+    slDataLoc = `${binLoc}\\sl.dat`;
 
     assignedCodesLoc = `${libLoc}\\assignedcodes.json`;
     storedCodesLoc = `${libLoc}\\storedcodes.json`;
 
-    mkTwitterCfg();
     checkTwitterConfig();
     mkTwitchCfg();
     mkDiscordCfc();
     mkGsheetsCred();
+    slInit();
     AssignCodes.checkAssignedCodes(assignedCodesLoc);
 
     fs.access(storedCodesLoc, fs.constants.F_OK, (err) => {
         let codesJSON = {
             "pc":  [],
             "ps4": [],
-            "xb1": []
+            "xb1": [],
+            "switch": []
         }
         if(err){
             fs.writeFile(storedCodesLoc, JSON.stringify(codesJSON, null, 4), (err) => {
@@ -176,10 +179,19 @@ const createWindow = () => {
             });
         }
         else{
-            let data = fs.readFileSync(storedCodesLoc);
+            let data;
             let newdat;
             try {
+                data = fs.readFileSync(storedCodesLoc);
                 newdat = JSON.parse(data);
+                if(! newdat.pc) newdat.pc = [];
+                if(! newdat.ps4) newdat.ps4 = [];
+                if(! newdat.xb1) newdat.xb1 = [];
+                if(! newdat.switch) newdat.switch = [];
+
+                fs.writeFile(storedCodesLoc, JSON.stringify(newdat, null, 4), (err) => {
+                    if(err){console.log('Couldn\'t create the codes storage.');}
+                });
 
                 console.log('found a good assigned codes file.');
             } catch (e) {
@@ -207,6 +219,21 @@ app.on('window-all-closed', () => {
 	if (process.platform !== 'darwin') {
 		app.quit();
 	}
+});
+
+ipcMain.on('app-close', (event)=> {
+    mainWindow.close();
+});
+
+ipcMain.on('app-max', (event)=> {
+    if(mainWindow.isMaximized())
+        mainWindow.restore();
+    else
+        mainWindow.maximize();
+});
+
+ipcMain.on('app-min', (event)=> {
+    mainWindow.minimize();
 });
 
 app.on('activate', () => {
@@ -317,7 +344,7 @@ var GCGrabber = require('../backend_modules/GCGrabber.js');
 
 
 ipcMain.on('grab-code', (event, arg) => {
-    GCGrabber.codeGrab(arg.platform, arg.numCodes, storedCodesLoc, (codes, err) =>{
+    GCGrabber.codeGrab(arg.platform, arg.num_codes, storedCodesLoc, (codes, err) =>{
         let stringCodes = '';
         codes.forEach(function(code, i){
             stringCodes = stringCodes+code+'\n';
@@ -329,7 +356,10 @@ ipcMain.on('grab-code', (event, arg) => {
 
         });
 
-        event.sender.send('grabbed-codes', {"codes": stringCodes.trim()});
+        event.sender.send('grabbed-codes', {
+            "codes": stringCodes.trim(),
+            "platform": arg.platform
+        });
     });
 });
 
@@ -418,8 +448,8 @@ function newWebView (event, arg) {
         parent: mainWindow,
         modal: false,
         width: 600,
-		height: 800,
-        minHeight: 730,
+		height: 920,
+        minHeight: 920,
 		minWidth: 350,
         autoHideMenuBar: true,
         backgroundColor: '#3B414F',
@@ -429,18 +459,6 @@ function newWebView (event, arg) {
             webviewTag: false,
             allowRunningInsecureContent: true
         }
-    });
-    fs.readFile(`${__dirname}/webview.html`, (err, dom) => {
-        if (err) throw err;
-
-        var $ = cheerio.load(dom);
-        $('webview').attr('src', arg.url);
-        console.log($.html());
-
-        fs.writeFile(`${__dirname}/webview.html`, $.html(), (err) => {
-            if (err) throw err;
-            // else browser.loadURL(`file://${__dirname}/webview.html`);
-        })
     });
     browser.loadURL(arg.url);
 
@@ -470,7 +488,7 @@ require('update-electron-app')({
 const isDev = require('electron-is-dev');
 
 if (isDev) {
-    // require('electron-reload')(__dirname);
+    require('electron-reload')(__dirname);
 	console.log('Running in development');
 } else {
 	console.log('Running in production');
@@ -487,7 +505,6 @@ function autoLauncher(event, arg){
             console.log('Launch on Start Enabled!');
         })
         .catch(function(err){
-            console.log('yeet');
             throw err;
         });
 
@@ -523,6 +540,7 @@ function handleRequest(req, res) {
         indexOfQuery = req.url.indexOf('?');
     }
 
+    console.log('Recieved ' + req.url);
     // if the request if for discord auth
     if(req.url.includes('/discord') ){
 
@@ -534,14 +552,6 @@ function handleRequest(req, res) {
         else if(req.url.includes('/failure_')){
             console.log('query: ' + req.url.substr(indexOfQuery));
         }
-    }
-    // if the request id for twitter auth
-    else if(req.url.includes('/twitter') ){
-        // This is for a request to open a new browser!
-        if(req.url.includes('/open_browser') && indexOfQuery >= 0){
-            console.log('Got a request to open a browser with this query: ' + req.url.substr(indexOfQuery) );
-        }
-
     }
     // if the request is for twitch
     else if(req.url.includes('/twitch')){
@@ -568,11 +578,7 @@ function handleRequest(req, res) {
             if(queryObject.code){
                 storeTwitchCode( queryObject.code );
             }
-
-
-            if(browser){
-                browser.close();
-            }
+            if(browser) browser.close();
 
         }
     }
@@ -589,22 +595,23 @@ function handleRequest(req, res) {
                 oauthAdd(queryObject.code);
                 console.log(queryObject);
             }
-            if(browser){
-                browser.close();
-            }
+            if(browser) browser.close();
 
         }
     }
-    /**
-     * // NOTE: Try to change this function/if blck so that it can recieve the domain+path within the query
-     */
-    /**
-     * This checks for a discord oauth return.
-     * If there is one, then we should check what the return data is.
-     */
+    // if the request is for streamlabs
+    else if(req.url.includes('/streamlabsauth')){
+        console.log('Recieved StreamLabs Response..');
+        let queryObject = queryString.parse(req.url.substr(indexOfQuery));
+        if(queryObject){
+            slAuthCont(queryObject.code);
+        }
+        if(browser) browser.close();
+    }
 
     else if(req.url.includes('/twitterauth')){
-        let query = req.url.substr(1);
+        console.log('Recieved Twitter Response..');
+        let query = req.url.substr(indexOfQuery);
         var tokens = queryString.parse(query);
         if(tokens.oauth_token){
             getEncryptedData(twitDataLoc, (err, data) => {
@@ -631,12 +638,14 @@ function handleRequest(req, res) {
     			fs.createReadStream(file).pipe(res);
     			return;
     		}
-    		res.writeHead(404);dd
+    		res.writeHead(404);
 
     		res.write('Finshed! You can close this tab now.');
     		res.end();
+            if(browser) browser.close();
     	});
     }
+
 
 }
 var server = http.createServer(handleRequest);
@@ -672,9 +681,16 @@ ipcMain.on('get-reg-list', getRegList);
 
 
 // Twitter API data ------------------------------------------------------------ Twitter API data
-var twitter;
+
 let twitterCon = '0IxvGU3ZW5ui4WOOSns1aBCYf';
 let twitterConSec = 'T2YUYViTBCUPWkmtVBLSvm15BTF6H4Pd9gvvr4PihSuJKV88Ub';
+
+var twitter = new twitterAPI({
+    consumerKey: twitterCon,
+    consumerSecret: twitterConSec,
+    callback: 'http://localhost:8888/twitterauth'
+});
+
 function checkTwitterConfig(){
     // Twitter data json init
 	fs.access(twitDataLoc, fs.constants.F_OK, (err) => {
@@ -713,45 +729,17 @@ function checkTwitterConfig(){
 	});
 }
 
-function mkTwitterCfg(){
-    fs.access(twitDataLoc, fs.constants.F_OK, (err) => {
-        if(err){
-            let twitData = {
-                consumer_key: twitterCon,
-                consumer_secret: twitterConSec,
-                request_token: '',
-                request_secret: '',
-                verifier: '',
-                access_token: '',
-                access_secret: ''
-            };
-            setEncryptedData(twitDataLoc, JSON.stringify(twitData), (err)=>{
-                if(err){
-
-                }
-                else{
-
-                }
-
-            });
-        }
-        else{
-            console.log('twitter data file found!');
-        }
-    });
-}
-
 ipcMain.on('make-data-twch', mkTwitchCfg);
 
 ipcMain.on('get-twi-keys', (event) => {
     getEncryptedData(twitDataLoc, (err, dat) => {
         if(err) throw err;
         let parsedDat = JSON.parse(dat);
-        twitter = new twitterAPI({
-            consumerKey: parsedDat.consumer_key,
-            consumerSecret: parsedDat.consumer_secret,
-            callback: 'http://localhost:8888'
-        });
+        // twitter = new twitterAPI({
+        //     consumerKey: parsedDat.consumer_key,
+        //     consumerSecret: parsedDat.consumer_secret,
+        //     callback: 'http://localhost:8888/twitterauth'
+        // });
         console.log('Twitter Bot Primed.');
     });
 });
@@ -765,7 +753,6 @@ function getTwitData(event, arg) {
         else if(arg.callback){
             arg.callback(decryptedDat);
         }
-
         console.log('Loaded Twitter Data!');
     });
 }
@@ -808,48 +795,28 @@ ipcMain.on('get-access_token-twit', (event, arg) => {
 
 
 function getTwitAccessTokens(){
-    fs.readFile(twitDataLoc, (err, data) => {
-        if(err) throw err;
-        let dat = JSON.parse(decryptData(undefined, {value: data}));
+    getEncryptedData(twitDataLoc, (err, data) => {
+        let dat = JSON.parse(data);
+        if(err) return console.log(err);
         twitter.getAccessToken(dat.request_token, dat.request_secret, dat.verifier, (err, accessToken, accessSecret, results) => {
-            if(err) throw err;
-            else{
-                dat.access_token = accessToken;
-                dat.access_secret = accessSecret;
-                dat = JSON.stringify(dat);
-                let dec = encryptData(undefined, {value: dat});
-                fs.writeFile(twitDataLoc, dec, (err) => {
-                    if(err) throw err;
-                    console.log('Saved twitter auth.');
-                    child.close();
-                    twitVerify();
-                });
-            }
-        });
-    });
-}
+            if(err) return console.log(err);
+            dat.access_token = accessToken;
+            dat.access_secret = accessSecret;
+            setEncryptedData(twitDataLoc, JSON.stringify(dat), (err) => {
+                if(err) throw err;
+                console.log('Saved twitter auth.');
+                if(browser) browser.close();
 
-function twitVerify(event){
-    fs.readFile(twitDataLoc, (err, data) => {
-        let dat = JSON.parse(decryptData(undefined, {value: data}));
-        twitter.verifyCredentials(dat.access_token, dat.access_secret, {}, function(err, data, response){
-            if(err){
-                if(event) event.sender.send('twit-authed', false);
-                console.log('Error while verifying twitter credentials: ' + err.stack);
-            }
-            else{
                 connectTwitter();
-                if(event) event.sender.send('twit-authed', true);
-            }
+            });
         });
     });
 }
-ipcMain.on('verify-twit-auth', twitVerify);
 
 function clearTwitterData(event){
     var twitData = {
         consumer_key:     twitterCon,
-        consumer_secret:  twitterCon,
+        consumer_secret:  twitterConSec,
         request_token:    '',
         request_secret:   '',
         verifier:         '',
@@ -868,24 +835,50 @@ function clearTwitterData(event){
 ipcMain.on('clearTwitterAuth', clearTwitterData);
 ipcMain.on('reset-twit-data', clearTwitterData);
 
-function connectTwitter(){
-    getEncryptedData(twitDataLoc, (err, data) => {
-        if(err) return console.log(err);
+function connectTwitter(event){
+    getEncryptedData(twitDataLoc, (err, dat) => {
+        let data = JSON.parse(dat);
+        console.log(data);
+
+        if(err){
+            dialog.showErrorBox('Twitter Auth Failed', "The Twitter authentication failed.\nReason: " + err.message);
+            return console.log(err);
+        }
         else{
+            // console.log(data.consumer_key+" " + data.consumer_secret+" " + data.access_token+" " + data.access_secret);
             T = new twit({
                 consumer_key:         data.consumer_key,
                 consumer_secret:      data.consumer_secret,
                 access_token:         data.access_token,
-                access_token_secret:  data.access_secret,
-                strictSSL: true
+                access_token_secret:  data.access_secret
             });
             T.get('account/verify_credentials', {
                 skip_status: true
             }).catch( (err) => {
-                if(err) throw err;
-                console.log(err);
+                if(err){
+                    dialog.showErrorBox('Twitter Auth Failed', "The Twitter authentication failed.\nReason: " + err.message);
+                    if(event || typeof event === "object") event.sender.send('twit-authed', false);
+                    console.log(err);
+                }
             }).then( (result) => {
                 console.log('I logged into the Twitter account of: ' + result.data['screen_name']);
+
+                if(event || typeof event === "object") {
+
+                    console.log('sending true...');
+                    event.sender.send('twit-authed', true);
+                    event.sender.send('finished-twit-auth');
+                }
+                else{
+                    dialog.showMessageBox({
+                        type: 'info',
+                        buttons: ["OK"],
+                        message: `Glyph Code Grabber successfully connected to the ${result.data['screen_name']} Twitter account. You can now giveaway codes on your twitter!`,
+                        title: 'Twitter Connection Success!'
+                    }, (res) => {
+
+                    });
+                }
             });
         }
 
@@ -899,6 +892,15 @@ function twitterPost(event, postStatus){
     }, function(err, data, response){
         if(err) throw err;
         else{
+            console.log('codes posted successfully!');
+            dialog.showMessageBox({
+                type: 'info',
+                buttons: ["OK"],
+                message: 'Your code(s) were posted to your Twitter account!',
+                title: 'Giveaway Successful...'
+            }, (res) => {
+
+            });
             console.log(data);
             event.sender.send('twitter-posted-data', data);
         }
@@ -1387,3 +1389,69 @@ function pullFromSheet(event, arg) {
 
 }
 ipcMain.on('gsheets-extract', pullFromSheet);
+
+
+
+// FOR StreamLabs API -----------------------------------------------------
+//
+const StreamLabsApi = require('../backend_modules/StreamLabs.js');
+
+var StreamLabs = new StreamLabsApi('DGORvSSFwNgOg0Qpg7xacw8R1ENvSBG555hGD8lA', 'bNeFZxfGsSoa3pjIyI0WMIfyH1OIxqCuxZyCybe6', 'http://localhost:8888/streamlabsauth', 'donations.read donations.create alerts.create socket.token points.read points.write');
+
+ipcMain.on('slAuth', (event, data) => {
+    slInit();
+    let slAuthUrl = StreamLabs.authorizationUrl();
+    console.log(StreamLabs);
+    newWebView(undefined, {
+        url: slAuthUrl
+    });
+});
+
+function slInit(runAnyway){
+    let slData = {
+        clientId : 'DGORvSSFwNgOg0Qpg7xacw8R1ENvSBG555hGD8lA',
+        clientSecret : 'bNeFZxfGsSoa3pjIyI0WMIfyH1OIxqCuxZyCybe6',
+        redirectUrl : 'http://localhost:8888/streamlabsauth',
+        scope : 'donations.read donations.create alerts.create socket.token points.read points.write',
+        userTokens : {}
+    }
+
+    checkFile(slDataLoc, (err) => {
+        if(err || runAnyway){
+            setEncryptedData(slDataLoc, JSON.stringify(slData), (err) => {
+                if(err) throw err;
+            });
+        }
+    })
+}
+// slInit();
+
+function slAuthCont(code){
+    StreamLabs.connect(code)
+    .then( (tokenData)=> {
+        getEncryptedData(slDataLoc, (err, data) => {
+            var dataFile = JSON.parse(data);
+            dataFile.userTokens = tokenData.data;
+            setEncryptedData(slDataLoc, JSON.stringify(dataFile), (err) => {
+                if(err) throw err;
+                else{
+
+                }
+            });
+        });
+
+    })
+    .catch((err) => {
+        console.error(err);
+    });
+}
+
+function slReauth(){
+    getEncryptedData(slDataLoc, (err, data) => {
+        if(err) throw err;
+        else{
+            var tokenData = JSON.parse(data);
+            StreamLabs.reconnect(tokenData.userTokens.refresh_token);
+        }
+    })
+}

@@ -16,24 +16,28 @@ body{
 }
 
 .checkbox-color{
-    background-color: rgba(#f4f4f4, 0);
+    background-color: rgba(244, 244, 244, 0);
     border-color: #14171A;
 }
-.checkbox-color-light{
-    background-color: rgba(#f4f4f4, 0);
-    border-color: #f3f3f3;
+.checkbox-color-light::before{
+    background-color: #505661;
+    /* border-color: #2c313c; */
+    border-width: 0;
 }
-.main-checkbox:checked {
+.custom-control-input:checked~.main-checkbox::before {
 	background-color: #e2bc48;
     border-color: #e2bc48;
 	color: #f3f3f3;
 }
-.twitter-checkbox:checked{
+.custom-control-input:checked~.twitter-checkbox::before{
     background-color: #1DA1F2;
     border-color: #1DA1F2;
     color: #f3f3f3;
 }
-.discord-checkbox:checked{
+.twitter-checkbox:focus{
+    box-shadow: none;
+}
+.custom-control-input:checked~.discord-checkbox::before{
     background-color:#7289DA;
     border-color: #7289DA;
     color: #f3f3f3;
@@ -51,9 +55,9 @@ body{
 }
 
 .btn-main{
-    color: #f3f3f3;
+    /* color: #f3f3f3;
     border: 2px solid #f3f3f3;
-    background-color: rgba(0,0,0,0.0);
+    background-color: rgba(0,0,0,0.0); */
 }
 .btn-main2{
     color: #14171A;
@@ -95,12 +99,12 @@ h1{
     color: #3a3a3a;
 }
 h3{
-    color: #14171A;
+    color: #52596a;
 }
 .x-icon, .back-icon{
-    color: #c8c8c8;
+    color: #626262;
 }
-.icon-links{
+.gearIcon{
     color: #f3f3f3;
 }
 .icon-links:visited{
@@ -122,8 +126,8 @@ h3{
     background-color: #2c313c;
 }
 .extras-card{
-    background-color: #f3f3f3;
-    color: #2c313c;
+    background-color: #3B414F;
+    /* color: #2c313c; */
 }
 .spacer{
     border-bottom: 1px solid rgb(46, 51, 56);
@@ -137,3 +141,9 @@ a.regular-link{
 a.regular-link:hover{
     color: #e2bc48;
 }
+/*
+@keyframes black-slide-up {
+    from{
+
+    }
+} */

@@ -125,19 +125,19 @@ const fs = require('fs');
                     let newData = JSON.parse(data);
                     // if the user is not in the dictionary
 
-                    let userExists = false;
+                    let codeExists = false;
                     let usr = {};
                     if(newData.assigned && newData.assigned.length > 0){
                         newData.assigned.forEach(function(el, i){
                             // if the code is in the dictionary
-                            if(el.code === user){
-                                userExists = true;
+                            if(el.code === code){
+                                codeExists = true;
                                 usr = el;
                             }
                         });
                     }
 
-                    if(!userExists){
+                    if(!codeExists){
                         if(callback) callback();
                         else{
                             return;

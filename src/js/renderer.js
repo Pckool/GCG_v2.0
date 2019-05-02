@@ -25,6 +25,10 @@ app.config(function($routeProvider){
         templateUrl: 'reg_list.html',
         controller: 'regListController'
     })
+    .when('/settings/streamlabs', {
+        templateUrl: 'streamlabs.html',
+        controller: 'slController'
+    })
     .otherwise({
         template: '<div><h2>You have broken the app and went somewhere you weren\'t supposed to!</h2></div>' +
         '<div><p>Please restart or click the button below.</p> <button href="#/!">Go to Home</button></div>'

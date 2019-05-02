@@ -8,6 +8,7 @@ app.controller('homeController', function($scope){
     $scope.$on('$routeChangeSuccess', function(event, current, prev){
         if(current.controller === 'homeController'){
             checkConnectBtns();
+            ipcRenderer.send('connect-to-twitter');
         }
     });
     // INIT FUNCTIONS
@@ -35,6 +36,7 @@ app.controller('homeController', function($scope){
     $scope.pcCodeGrab = pcCodeGrab;
     $scope.ps4CodeGrab = ps4CodeGrab;
     $scope.xb1CodeGrab = xb1CodeGrab;
+    $scope.switchCodeGrab = switchCodeGrab;
 
     $scope.twitterMultiplier = 0;
 
@@ -71,28 +73,38 @@ app.controller('homeController', function($scope){
                 }
                 else
                     console.log('No File Location Chosen!', 'You did not choose a ' +
-                    'XBOX ONE Location! Please choose a location before trying to post codes on twitter!');
+                    'Xbox One Location! Please choose a location before trying to post codes on twitter!');
             });
         }
 
-        if(callback)
-            await wait(1000);
-            callback(codes);
+        if($('#twitPostSwitchCode:checked').length){
+            switchCodeGrab(newCodes => {
+                if(newCodes){
+                    if(codes !== '') codes += '\n';
+                    codes = codes + 'Switch: ' + newCodes;
+                }
+                else
+                    console.log('No File Location Chosen!', 'You did not choose a ' +
+                    'Switch Location! Please choose a location before trying to post codes on twitter!');
+            });
+        }
+
+        if(callback){
+            setTimeout(function () {
+                console.log('HERE: ' + codes);
+                callback(codes);
+            }, 2000);
+            // await wait(2000);
+
+        }
     }
 
     $scope.postCodes = function(){
-        $scope.pullCodes((codes) => {
+        $scope.pullCodes( codes => {
 
             if(codes.length <= 280 && codes.length > 4){
                 twitterPost(codes);
-                console.log('codes posted successfully!');
-                dialog.showMessageBox({
-                    type: 'info',
-                    buttons: {},
-                    message: 'Your code(s) were posted to your Twitter account!'
-                }, (res, checked) => {
 
-                });
             }
             else{
                 console.log('' + codes.length);
@@ -135,9 +147,19 @@ app.controller('homeController', function($scope){
         });
 
     }
+
+    $scope.openDiscordControls = function(){
+        // $('#discord-controls').toggleClass('show');
+        // $('#discord-controls').addClass('collapsing');
+    }
+    $scope.openTwitterControls = function(){
+        // $('#twitter-controls').toggleClass('show');
+    }
     dis_client.on('ready', () =>{
 
     });
+
+
 
 });
 
@@ -146,49 +168,72 @@ app.controller('homeController', function($scope){
 function pcCodeGrab(callback){
     ipcRenderer.send('grab-code',{
         "platform": "pc",
-        "numCodes": $('#numCodes').val()
+        "num_codes": $('#numCodes').val()
     });
     ipcRenderer.once('grabbed-codes', (event, codes) => {
-        console.log(codes);
-        if(callback){
-            callback(codes.codes);
+        if(codes.platform === "pc"){
+            console.log(codes);
+            if(callback){
+                callback(codes.codes);
+            }
+            else{
+                copy(codes.codes);
+                notify('PC codes copied to clipboard');
+            }
         }
-        else{
-            copy(codes.codes);
-            notify('PC codes copied to clipboard');
-        }
-
     });
 }
 
 function ps4CodeGrab(callback){
     ipcRenderer.send('grab-code',{
         "platform": "ps4",
-        "numCodes": $('#numCodes').val()
+        "num_codes": $('#numCodes').val()
     });
     ipcRenderer.once('grabbed-codes', (event, codes) => {
-        if(callback){
-            callback(codes.codes);
-        }
-        else{
-            copy(codes.codes);
-            notify('PS4 codes copied to clipboard');
+        if(codes.platform === "ps4"){
+            if(callback){
+                callback(codes.codes);
+            }
+            else{
+                copy(codes.codes);
+                notify('PS4 codes copied to clipboard');
+            }
         }
     });
 }
 
 function xb1CodeGrab(callback){
     ipcRenderer.send('grab-code',{
-        "platform": "xb1",
-        "numCodes": $('#numCodes').val()
+        "platform": 'xb1',
+        "num_codes": $('#numCodes').val()
     });
     ipcRenderer.once('grabbed-codes', (ewvent, codes) => {
-        if(callback){
-            callback(codes.codes);
+        if(codes.platform === "xb1"){
+            if(callback){
+                callback(codes.codes);
+            }
+            else{
+                copy(codes.codes);
+                notify('Xbox One codes copied to clipboard');
+            }
         }
-        else{
-            copy(codes.codes);
-            notify('XB1 codes copied to clipboard');
+    });
+}
+
+function switchCodeGrab(callback){
+    ipcRenderer.send('grab-code',{
+        "platform": "switch",
+        "num_codes": $('#numCodes').val()
+    });
+    ipcRenderer.once('grabbed-codes', (event, codes) => {
+        if(codes.platform === "switch"){
+            if(callback){
+                callback(codes.codes);
+            }
+            else{
+                copy(codes.codes);
+                notify('Switch codes copied to clipboard');
+            }
         }
     });
 }
@@ -206,20 +251,19 @@ function postCodesCheck(event, authed){
     else{
         console.log('twitter is not authorized');
         $('#twitPostCodes').prop("disabled", true);
-        // $('#twitPostCodes').toggleClass('btn-color-blue', false);
         $('#twitPostCodes').toggleClass('btn-disabled', true);
 
         $('#twitPostPCCode').prop('disabled', true);
-        // $('#twitPostPCCode').toggleClass('checkbox-color', false);
         $('#twitPostPCCode').toggleClass('btn-disabled', true);
 
         $('#twitPostPS4Code').prop('disabled', true);
-        // $('#twitPostPS4Code').toggleClass('checkbox-color', false);
         $('#twitPostPS4Code').toggleClass('btn-disabled', true);
 
         $('#twitPostXB1Code').prop('disabled', true);
-        // $('#twitPostXB1Code').toggleClass('checkbox-color', false);
         $('#twitPostXB1Code').toggleClass('btn-disabled', true);
+
+        $('#twitPostSwitchCode').prop('disabled', true);
+        $('#twitPostSwitchCode').toggleClass('btn-disabled', true);
     }
 }
 
@@ -230,35 +274,38 @@ function checkLocations_mainButtons(){
         if(numCodes.pc !== 0){
             // pc codes location is available
             $('#grabPC').prop('disabled', false);
-            //$('#grabPC').toggleClass('btn-color-gold', true);
             $('#grabPC').toggleClass('btn-disabled', false);
         }
         else{
             $('#grabPC').prop('disabled', true);
-            //$('#grabPC').toggleClass('btn-color-gold', false);
             $('#grabPC').toggleClass('btn-disabled', true);
         }
         if(numCodes.ps4 !== 0){
             // ps4 codes location is available
             $('#grabPS4').prop('disabled', false);
-            //$('#grabPS4').toggleClass('btn-color-gold', true);
             $('#grabPS4').toggleClass('btn-disabled', false);
         }
         else{
             $('#grabPS4').prop('disabled', true);
-            //$('#grabPS4').toggleClass('btn-color-gold', false);
             $('#grabPS4').toggleClass('btn-disabled', true);
         }
         if(numCodes.xb1 !== 0){
             // xb1 codes location is available
             $('#grabXB1').prop('disabled', false);
-            //$('#grabXB1').toggleClass('btn-color-gold', true);
             $('#grabXB1').toggleClass('btn-disabled', false);
         }
         else{
             $('#grabXB1').prop('disabled', true);
-            //$('#grabXB1').toggleClass('btn-color-gold', false);
             $('#grabXB1').toggleClass('btn-disabled', true);
+        }
+        if(numCodes.switch !== 0){
+            // switch codes location is available
+            $('#grabSwitch').prop('disabled', false);
+            $('#grabSwitch').toggleClass('btn-disabled', false);
+        }
+        else{
+            $('#grabSwitch').prop('disabled', true);
+            $('#grabSwitch').toggleClass('btn-disabled', true);
         }
 
     });
@@ -299,17 +346,27 @@ function checkLocations_checkboxes(){
             $('#twitPostXB1Code').prop('disabled', true);
             $('#twitPostXB1Code').toggleClass('btn-disabled', true);
         }
+        if(numCodes.switch !== ''){
+            // xb1 codes location is available
+            $('#twitPostSwitchCode').prop('disabled', false);
+            $('#twitPostSwitchCode').toggleClass('btn-disabled', false);
+        }
+        else{
+            console.log('trying to disable xb1');
+            $('#twitPostSwitchCode').prop('disabled', true);
+            $('#twitPostSwitchCode').toggleClass('btn-disabled', true);
+        }
     });
 }
 
 function checkCheckBoxes(){
-    if($('#twitPostPCCode:checked').length === 0 && $('#twitPostPS4Code:checked').length === 0 && $('#twitPostXB1Code:checked').length === 0){
+    if($('#twitPostPCCode:checked').length === 0 && $('#twitPostPS4Code:checked').length === 0 && $('#twitPostXB1Code:checked').length === 0 && $('#twitPostSwitchCode:checked').length === 0){
         // all of the checkboxes are unchecked
         console.log('all of the checkboxes are unchecked');
         $('#twitPostCodes').prop("disabled", true);
         $('#twitPostCodes').toggleClass('btn-disabled', true);
     }
-    else if($('#twitPostPCCode:checked').length !== 0 || $('#twitPostPS4Code:checked').length !== 0 || $('#twitPostXB1Code:checked').length !== 0){
+    else if($('#twitPostPCCode:checked').length > 0 || $('#twitPostPS4Code:checked').length > 0 || $('#twitPostXB1Code:checked').length > 0 || $('#twitPostSwitchCode:checked').length > 0){
         // At least one checkbox is checked
         console.log('At least one checkbox is checked');
         $('#twitPostCodes').prop("disabled", false);

@@ -3,6 +3,7 @@ const jetpack = require('fs-jetpack');
 var pcLocation = '';
 var ps4Location = '';
 var xb1Location = '';
+var switchLocation ='';
 const keyPass = 'WarframeFanChannels';
 coreSettings = {
     "options": {
@@ -76,6 +77,23 @@ app.controller('settingsController', function($scope){
                     }
                 });
             }
+            else if(platform === 'switch'){
+                switchLocation = fileLocation.toString();
+                dialog.showMessageBox({
+                    type: "question",
+                    buttons: ["Yes", "Cancel"],
+                    title: "Are you sure?",
+                    message: `I am about to add this file "${switchLocation}" to the Xbox One codes list. Are you sure this is the correct file?`,
+
+                }, (res) => {
+                    if(res === 0){
+                        ipcRenderer.send('append-codes', {
+                            "platform": "switch",
+                            "location": switchLocation
+                        });
+                    }
+                });
+            }
             ipcRenderer.once('append-codes-success', (event, arg) =>{
                 checkNumCodes();
                 notify('Code list updated!')
@@ -93,6 +111,10 @@ app.controller('settingsController', function($scope){
     $scope.showVersion = function(){
         ipcRenderer.send('show-app-version');
     }
+    $scope.openWindOps = function(){
+        // $('#windows-options').toggleClass('show');
+
+    };
 
 });
 
@@ -120,6 +142,7 @@ function checkNumCodes(){
         $('#pc-numcodes').text(numCodes.pc);
         $('#ps4-numcodes').text(numCodes.ps4);
         $('#xb1-numcodes').text(numCodes.xb1);
+        $('#switch-numcodes').text(numCodes.switch);
     });
 }
 
@@ -178,6 +201,10 @@ function saveLocations(){
         console.log('saving xb1');
         locations[2] = xb1Location;
     }
+    if(switchLocation != undefined && switchLocation.length > 2){
+        console.log('saving switch');
+        locations[3] = switchLocation;
+    }
 }
 
 function clearCodes(platform) {
@@ -197,7 +224,7 @@ function resetConfig(){
     // saveLocations(); //#################################################
 
     //resetTwitchConfig();
-    ipcRenderer.send('clearTwitterAuth');    // Reset Twitter
+    ipcRenderer.send('reset-twit-data');    // Reset Twitter
     resetDiscordConfig();
 
     resetTwitchConfig();
@@ -217,6 +244,7 @@ function LoadConfig(callback){
         pcLocation = coreSettings.pc;
         ps4Location = coreSettings.ps4;
         xb1Location = coreSettings.xb1;
+        switchLocation = coreSettings.switch;
         console.log('Save Loaded!');
         if(callback){
             callback();
@@ -227,23 +255,9 @@ function LoadConfig(callback){
 
 }
 function configCheck(){
-    fs.readFile(`${__dirname}/bin/loc.dat`, (err, data) => {
-        if(err){
-            saveLocations(); //#################################################
-        }
-        else{
-            LoadConfig();
-        }
-    });
-    fs.readFile(`${__dirname}/bin/tw.dat`, (err, data) => {
-        if(err){
-            ipcRenderer.send('clearTwitterAuth');
-        }
-        else{
-            ipcRenderer.send('get-twi-keys');
-        }
-
-    });
+    saveLocations(); //#################################################
+    LoadConfig();
+    ipcRenderer.send('get-twi-keys');
 }
 // On the initial load, we will load the user's data
 $(document).ready(function(){

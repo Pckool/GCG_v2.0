@@ -5,6 +5,10 @@ const $ = require('jquery');
 const {dialog} = require('electron').remote;
 var bLauncher = require('launch-browser');        // Launch-Browser
 
+// window.$ = window.jQuery = require('jquery'); // not sure if you need this at all
+window.Popper = require('popper.js'); 
+window.Bootstrap = require('bootstrap');
+
 var coreSettings;
 
 

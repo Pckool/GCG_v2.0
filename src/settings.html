@@ -1,100 +1,227 @@
-<div class="sub-cont toggle">
+<div class="toggle sub-cont container-fluid settings">
     <div class="top-bar" id="top-bar">
         <div class="flex-column">
             <a href="" id="app-version" class="app-version hidden-link" ng-click="showVersion()">Application Info</a>
         </div>
-        <a class="x-icon far fa-times-circle fa-lg" href="#/!"></a>
+        <a class="icon-links x-icon far fa-times-circle fa-lg" href="#/!"></a>
     </div>
 
-    <div class="main-card settings-card" id="main-card">
-        <!-- PC Container -->
-        <div class="flex-column pc-box">
-            <div class="flex-row">
-                <label for="" class="">PC</label>
-                <i id="pc-input" class="sub-text flex-grow2">remaining: <i ng-model="pcLocation" id="pc-numcodes"></i></i>
+
+
+    <div class="main-card settings-card container" id="main-card">
+        <div class="row mb-4">
+            <div class="col-12">
+                <h3>Code Management<i class="fas fa-caret-square-down float-right open-windows-ops icon-links" data-toggle="collapse" data-target="#code-control" aria-expanded="false" aria-controls="code-control"></i></h3>
             </div>
 
-            <div class="flex-row margin-lr-1em">
+        </div>
+
+        <div class="container collapse" id="code-control">
+            <!-- PC Container -->
+            <div class="row pc-box">
+                <div class="container">
+                    <div class="row">
+                        <div class="col">
+                            <label class="label-1">PC</label>
+                            <i id="pc-input" class="sub-text flex-grow-2">remaining: <i ng-model="pcLocation" id="pc-numcodes"></i></i>
+                        </div>
+                    </div>
+
+                    <div class="row margin-lr-1em">
+
+                    </div>
+
+                    <div class="row">
+                        <div class="col">
+                            <button class="btn btn-main flex-grow-2 btn-color-gold" type="button" name="pcBrowse" ng-click="showFileManager('pc')">Add Codes</button>
+                        </div>
+                        <div class="col">
+                            <button class="btn btn-main flex-grow-1 btn-color-red" type="button" name="pcClear" ng-click="clearCodes('pc')">Clear Codes</button>
+                        </div>
+
+                    </div>
+                </div>
 
             </div>
 
-            <div class="flex-row">
-                <button class="btn-main flex-grow2 btn-color-gold" type="button" name="pcBrowse" ng-click="showFileManager('pc')">Add Codes</button>
-                <button class="btn-main flex-grow1 btn-color-red" type="button" name="pcClear" ng-click="clearCodes('pc')">Clear Codes</button>
+            <!-- PS4 Container -->
+            <div class="row ps4-box">
+                <div class="container">
+                    <div class="row">
+                        <div class="col">
+                            <label for="" class="label-1">PlayStation 4</label>
+                            <i id="ps4-input" class="sub-text flex-grow-2">remaining: <i ng-model="ps4Location" id="ps4-numcodes" class="sub-text"></i></i>
+                        </div>
+                    </div>
+
+                    <div class="row margin-lr-1em">
+
+                    </div>
+
+                    <div class="row">
+                        <div class="col">
+                            <button class="btn btn-main flex-grow-2 btn-color-gold" type="button" name="ps4Browse" ng-click="showFileManager('ps4')">Add Codes</button>
+                        </div>
+                        <div class="col">
+                            <button class="btn btn-main flex-grow-1 btn-color-red" type="button" name="ps4Clear" ng-click="clearCodes('ps4')">Clear Codes</button>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+            <!-- Xbox One Container -->
+            <div class="row xb1-box">
+                <div class="container">
+                    <div class="row">
+                        <div class="col">
+                            <label class="label-1">Xbox One</label>
+                            <i id="xb1-input" class="sub-text flex-grow-2">remaining: <i ng-model="xb1Location" id="xb1-numcodes" class="sub-text"></i></i>
+                        </div>
+                    </div>
+
+                    <div class="row margin-lr-1em">
+
+                    </div>
+
+                    <div class="row">
+                        <div class="col">
+                            <button class="btn btn-main flex-grow-2 btn-color-gold" type="button" name="xb1Browse" ng-click="showFileManager('xb1')">Add Codes</button>
+                        </div>
+                        <div class="col">
+                            <button class="btn btn-main flex-grow-1 btn-color-red" type="button" name="xb1Clear" ng-click="clearCodes('xb1')">Clear Codes</button>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+            <!-- Switch Container -->
+            <div class="row xb1-box">
+                <div class="container">
+                    <div class="row">
+                        <div class="col">
+                            <label class="label-1">Switch</label>
+                            <i id="switch-input" class="sub-text flex-grow-2">remaining: <i ng-model="switchLocation" id="switch-numcodes" class="sub-text"></i></i>
+                        </div>
+                    </div>
+
+                    <div class="row margin-lr-1em">
+
+                    </div>
+
+                    <div class="row">
+                        <div class="col">
+                            <button class="btn btn-main flex-grow-2 btn-color-gold" type="button" name="switchBrowse" ng-click="showFileManager('switch')">Add Codes</button>
+                        </div>
+                        <div class="col">
+                            <button class="btn btn-main flex-grow-1 btn-color-red" type="button" name="switchClear" ng-click="clearCodes('switch')">Clear Codes</button>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col">
+                    <a href="#!settings/reg-list" class="a-btn button-links">
+                        <button type="button" class="btn2-main flex-grow-1">List of Registered Codes</button>
+                    </a>
+                </div>
+
             </div>
         </div>
 
-        <!-- PS4 Container -->
-        <div class="flex-column ps4-box">
-            <div class="flex-row">
-                <label for="" class="">PlayStation 4</label>
-                <i id="ps4-input" class="sub-text flex-grow2">remaining: <i ng-model="ps4Location" id="ps4-numcodes" class="sub-text"></i></i>
-            </div>
 
-            <div class="flex-row margin-lr-1em">
-
-            </div>
-
-            <div class="flex-row">
-                <button class="btn-main flex-grow2 btn-color-gold" type="button" name="ps4Browse" ng-click="showFileManager('ps4')">Add Codes</button>
-                <button class="btn-main flex-grow1 btn-color-red" type="button" name="ps4Clear" ng-click="clearCodes('ps4')">Clear Codes</button>
-            </div>
-        </div>
-
-        <!-- Xbox One Container -->
-        <div class="flex-column xb1-box">
-            <div class="flex-row">
-                <label for="" class="">Xbox One</label>
-                <i id="xb1-input" class="sub-text flex-grow2">remaining: <i ng-model="xb1Location" id="xb1-numcodes" class="sub-text"></i></i>
-            </div>
-
-            <div class="flex-row margin-lr-1em">
-
-            </div>
-
-            <div class="flex-row">
-                <button class="btn-main flex-grow2 btn-color-gold" type="button" name="xb1Browse" ng-click="showFileManager('xb1')">Add Codes</button>
-                <button class="btn-main flex-grow1 btn-color-red" type="button" name="xb1Clear" ng-click="clearCodes('xb1')">Clear Codes</button>
-            </div>
-        </div>
-
-        <a href="#!settings/reg-list" class="a-btn">
-            <button type="button" class="btn2-main flex-grow1">List of Registered Codes</button>
-        </a>
 
         <div class="spacer"></div>
 
         <!-- CONNECTIONS -->
 
-        <div class="connections-card flex-row">
-            <a href="" class="button-links flex-grow1">
-                <button class="btn-main btn-color-blue flex-grow1" type="button" name="twitterConn" onclick="twitterOauth()">Connect Twitter</button>
-            </a>
-            <a href="#!settings/discord" class="button-links flex-grow1">
-                <button type="button" class="btn-main btn-color-dis flex-grow1" name="discordInt">Discord Settings</button>
-            </a>
-            <a href="#!settings/twitch" class="button-links flex-grow1">
-                <button type="button" class="btn-main btn-color-twch flex-grow1" name="twitchInt">Twitch Settings</button>
-            </a>
+        <div class="row mb-4">
+            <div class="col-12">
+                <h3>Connections<i class="fas fa-caret-square-down float-right icon-links" data-toggle="collapse" data-target="#connections-options" aria-expanded="false" aria-controls="connections-options" ng-click="openWindOps()"></i></h3>
+            </div>
 
         </div>
-        <div class="connections-card flex-row">
-            <a href="#!settings/gsheets" class="button-links flex-grow1">
-                <button type="button" class="btn-main btn-color-sheets flex-grow1" name="gsheetsInt">Google Sheets Settings</button>
-            </a>
+        <div class="connections-card container collapse"  id="connections-options">
+
+            <div class="row">
+                <div class="col">
+                    <a href="" class="button-links flex-grow-1">
+                        <button class="btn btn-main btn-color-blue flex-grow-1" type="button" name="twitterConn" onclick="twitterOauth()">Connect Twitter</button>
+                    </a>
+                </div>
+
+                <div class="col">
+                    <a href="#!settings/discord" class="button-links flex-grow-1">
+                        <button type="button" class="btn btn-main btn-color-dis flex-grow1" name="discordInt">Discord Settings</button>
+                    </a>
+                </div>
+
+                <div class="col">
+                    <a href="#!settings/twitch" class="button-links flex-grow-1">
+                        <button type="button" class="btn btn-main btn-color-twch flex-grow1 btn-disabled" name="twitchInt" disabled>Twitch Settings</button>
+                    </a>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col">
+                    <a href="#!settings/gsheets" class="button-links flex-grow-1">
+                        <button type="button" class="btn btn-main btn-color-sheets flex-grow1" name="gsheetsInt">Google Sheets Settings</button>
+                    </a>
+                </div>
+
+                <div class="col">
+                    <a href="#!settings/streamlabs" class="button-links flex-grow-1">
+                        <button type="button" class="btn btn-main btn-color-sl flex-grow-1" name="slInt">StreamLabs Settings</button>
+                    </a>
+                </div>
+
+                <div class="col">
+
+                </div>
+            </div>
+
+
         </div>
 
         <div class="spacer"></div>
 
-        <div id="mainOptions" class="flex-column">
-            <label for="">Windows Options</label>
-            <div class="check-cont">
-                <input type="checkbox" id="run-on-start" class="core-settings-change main-checkbox checkbox checkbox-color-light" name="runOnStart" value="" ng-model="run_on_start" ng-change="coreSettingsChange()">Run on Windows Start</input>
+        <div class="row mb-4">
+            <div class="col-12">
+                <h3>Windows Options<i class="fas fa-caret-square-down float-right open-windows-ops icon-links" data-toggle="collapse" data-target="#system-options" aria-expanded="false" aria-controls="system-options" ng-click="openWindOps()"></i></h3>
             </div>
+
+        </div>
+
+        <div id="system-options" class="container-fluid collapse">
+            <div class="row">
+                <div class="col">
+                    <div class="custom-control custom-checkbox">
+                        <input type="checkbox" id="run-on-start" class="core-settings-change main-checkbox custom-control-input" name="runOnStart" value="" ng-model="run_on_start" ng-change="coreSettingsChange()"></input>
+                        <label for="run-on-start" class="custom-control-label main-checkbox checkbox-color-light">Run on Windows Start</label>
+                    </div>
+
+                </div>
+
+            </div>
+
         </div>
     </div>
-    <div class="bottom-bar flex-row flex-end bottom-card" id="bottom-bar">
-        <a href="#/!" class="button-links"><button id="save-btn" class="btn-main flex-grow1 btn-color-green" type="button" name="Save" onclick="saveLocations()">Save</button></a>
-        <a class="button-links"><button id="reset-btn" class="btn-main flex-grow1 btn-color-red" type="button" name="Reset" onclick="resetConfig()">Reset</button></a>
+    <div class="bottom-bar-overlay container bottom-card" id="bottom-bar">
+        <div class="row overlay-row">
+            <div class="col">
+                <a href="#/!" class="button-links"><button id="save-btn" class="btn btn-main flex-grow1 btn-color-green" type="button" name="Save" onclick="saveLocations()">Save</button></a>
+            </div>
+
+            <div class="col">
+                <a class="button-links"><button id="reset-btn" class="btn btn-main flex-grow1 btn-color-red" type="button" name="Reset" onclick="resetConfig()">Reset</button></a>
+            </div>
+
+        </div>
+
+
     </div>
 </div>

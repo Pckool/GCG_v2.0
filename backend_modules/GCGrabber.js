@@ -82,6 +82,24 @@ import {dialog} from 'electron';
             });
 
         }
+        else if(platform === "switch"){
+            fs.readFile(storedCodesLoc, (err, data) => {
+                if(err) throw err;
+                dataOBJ = JSON.parse(data);
+                for (var i = 0; i < numCodes; i++) {
+                    try{
+                        codez[i] = codez + dataOBJ.switch.shift() + "\n";
+                    }catch(e){
+                        dialog.showErrorBox('Ran out of Codes :(', 'Looks like you ran out of codes or something :( \n send this to TDefton: ' + e)
+                    }
+                }
+                fs.writeFileSync(storedCodesLoc, JSON.stringify(dataOBJ, null, 4));
+                if(callback){
+                    callback(codez);
+                }
+            });
+
+        }
         else{
             dialog.showErrorBox('No Platform Chosen!', 'You did not choose ' +
             'a Platform! Please choose one before trying to grab codes!');
@@ -159,6 +177,29 @@ import {dialog} from 'electron';
                 });
             });
         }
+        else if(platform === 'switch' && codez.length > 0){
+            let dataOBJ;
+
+            fs.readFile(storedCodesLoc, (err, data) => {
+                if(err) throw err;
+                dataOBJ = JSON.parse(data);
+
+                let concatCodes = dataOBJ.switch.concat(codez);
+                // used to ensure there are no duplicates
+                let uniqueCodes = [];
+                concatCodes.forEach(function(el, i){
+                    if( ! uniqueCodes.includes(el) ) uniqueCodes.push(el);
+                });
+                dataOBJ.switch = uniqueCodes;
+
+                // Write the new data
+                fs.writeFile(storedCodesLoc, JSON.stringify(dataOBJ, null, 4), (err) => {
+                    if(err) throw err;
+                    if(callback) callback();
+                });
+            });
+        }
+
         else if(callback){
             console.log('There was no platform, or the codes array was empty. Returning.');
             callback();
@@ -177,6 +218,8 @@ import {dialog} from 'electron';
                 dataOBJ.ps4 = [];
             if(platform === 'xb1')
                 dataOBJ.xb1 = [];
+            if(platform === 'switch')
+                dataOBJ.switch = [];
 
             // Write the new data
             dialog.showMessageBox({
@@ -206,14 +249,16 @@ import {dialog} from 'electron';
         let codeNums = {
             "pc": 0,
             "ps4": 0,
-            "xb1": 0
+            "xb1": 0,
+            "switch": 0
         }
         fs.readFile(storedCodesLoc, (err, data) => {
             if(err) {
                 let codesJSON = {
                     "pc":  [],
                     "ps4": [],
-                    "xb1": []
+                    "xb1": [],
+                    "switch": []
                 }
                 fs.writeFile(storedCodesLoc, JSON.stringify(codesJSON, null, 4), (err) => {
                     if(err){console.log('Couldn\'t create the codes storage.');}
@@ -222,9 +267,10 @@ import {dialog} from 'electron';
 
             dataOBJ = JSON.parse(data);
 
-            codeNums.pc = dataOBJ.pc.length;
-            codeNums.ps4 = dataOBJ.ps4.length;
-            codeNums.xb1 = dataOBJ.xb1.length;
+            if(dataOBJ.pc) codeNums.pc = dataOBJ.pc.length;
+            if(dataOBJ.ps4) codeNums.ps4 = dataOBJ.ps4.length;
+            if(dataOBJ.xb1) codeNums.xb1 = dataOBJ.xb1.length;
+            if(dataOBJ.switch) codeNums.switch = dataOBJ.switch.length;
 
             callback(codeNums);
         });
