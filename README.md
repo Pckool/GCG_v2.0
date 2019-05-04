@@ -11,7 +11,6 @@ Check here https://tdefton.stream/gcg/documentation
 
 ### For The Future
 - [X] Need twitter integration
-- [ ] Possibly Discord
-- [ ] Possibly Twitch
+- [X] Discord
+- [X] Twitch
 - [ ] Twitch extention to interface with the app? (an easy way for viewers to redeem glyphs)
-- [ ] Need to come up with more things to add lol
